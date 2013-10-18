@@ -1,34 +1,5 @@
-deep-fs provides simple wrappers that wrap nodejs asynch fs call (read and write) in a deep compliant (promised base) way.
+deep-routes : As now, just extracted from connectjs urlrouter middleware (https://github.com/fengmk2/urlrouter)
 
-Provided protocoles (see deep protocoles) :
+Routes format will be decorate with superset to allow automatique casting and validation, 
+or reverse writing for deep-linking in browser.
 
-	- raw text file (or html)  (text:: or html::)
-	- json (json::)
-
-
-It support File watching.
-
-
-
-Usage
-=========
-
-	require("deep-fs/json");
-
-	deep("json::./my/file.json")
-	.log();
-
-
-
-	deep.store("json").post({ hello:"world" }, { id:"./my/path/to/output.json" })
-
-
-
-	deep.store.JSON("myprotocole", schema, {
-		fileWatching:true
-	});
-
-
-	deep.mode.dev = true;
-
-	
