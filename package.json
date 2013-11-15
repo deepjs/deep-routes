@@ -1,15 +1,12 @@
 {
-  "name": "deep-jquery-ajax",
-  "description":"jquery ajax stores for deep",
-  "author":{
-    "name": "Gilles Coomans",
-    "email": "gilles.coomans@gmail.com"
-  }, 
+  "name": "deep-routes",
+  "description":"route parser utilities for deep",
+  "author":"Gilles Coomans <gilles.coomans@gmail.com>", 
   "version": "0.1.0",
   "contributors": [],
   "repository": {
     "type": "git",
-    "url": "git://github.com/nomocas/deep-jquery-ajax.git"
+    "url": "git://github.com/deepjs/deep-routes.git"
   },
   "maintainers": [
     {
@@ -18,13 +15,12 @@
     }
   ],
   "dependencies": {
-    "deep": ">=0.9.3.1"
+    "deep": ">=0.9.6"
   },
   "mappings":{
-    "deep": "git+ssh://git@dev.ubik.be/deep"
   },
   "engine":{
   	"node":">=0.10.0"
   },
-  "main":"./lib/main"
+  "main":"./route.js"
 }
