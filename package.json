@@ -15,7 +15,7 @@
     }
   ],
   "dependencies": {
-    "deep": ">=0.9.6"
+    "deepjs": ">=0.9.6"
   },
   "mappings":{
   },
