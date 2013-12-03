@@ -26,17 +26,29 @@ function Router(url, strict) {
   }
 
 
+
+  this.producer = url.replace(/:(\w+)(?:\(([^\)]+)\))?(\?)?/g, function (all, name, rex, atLeastOne) {
+    //console.log("url replacedddddd : ", all, name, rex, atLeastOne);
+    //keys.push(name);
+    if (!rex) {
+      rex = '[^\\/]' + (atLeastOne === '?' ? '*' : '+');
+    }
+    return '(' + name + ')';
+  });
+
   var keys = [];
   this.source = url;
   url = url.replace(/\//g, '\\/') // '/' => '\/'
   .replace(/\./g, '\\.?') // '.' => '\.?'
   .replace(/\*/g, '.+'); // '*' => '.+'
 
+
   // ':id' => ([^\/]+), 
   // ':id?' => ([^\/]*), 
   // ':id([0-9]+)' => ([0-9]+)+, 
   // ':id([0-9]+)?' => ([0-9]+)* 
   url = url.replace(/:(\w+)(?:\(([^\)]+)\))?(\?)?/g, function (all, name, rex, atLeastOne) {
+    //console.log("url replace : ", all, name, rex, atLeastOne);
     keys.push(name);
     if (!rex) {
       rex = '[^\\/]' + (atLeastOne === '?' ? '*' : '+');
@@ -81,6 +93,38 @@ Router.prototype.match = function (pathname) {
 };
 
 /**
+ * Try to match given pathname, if match, return the match `params`.
+ * 
+ * @param {String} pathname
+ * @return {Object|null} match `params` or null.
+ */
+Router.prototype.produce = function (params) {
+  //var m = this.rex.exec(pathname);
+  //console.log(this.rex, this.keys, this.source, this.producer);
+  var fin = this.producer.replace(/\((\w+)\)/gi, function(all, name){
+    return params[name];
+  });
+  console.log("produced : ", fin);
+
+
+/*  var match = null;
+  if (m) {
+    if (!this.keys) {
+      return m.slice(1);
+    }
+    match = {};
+    var keys = this.keys;
+    for (var i = 0, l = keys.length; i < l; i++) {
+      var value = m[i + 1];
+      if (value) {
+        match[keys[i]] = value;
+      }
+    }
+  }
+  return match;*/
+};
+
+/**
  * Create a `Router` instance.
  *
  * @param {String|RegExp} urlpattern
@@ -91,33 +135,16 @@ exports.createRouter = function (urlpattern, strict) {
   return new Router(urlpattern, strict);
 };
 
+
+
+
+
 /**
- * Flatten the given `arr`.
- *
- * @param {Array} arr
- * @return {Array}
- * @api private
+ * @example producing route from params
+ * var route = require("deep-routes/route"); 
+ * var r = route.createRouter("/hello/:id/:world/:bloup"); 
+ * r.produce({ id:12, world:"deepjs", bloup:"12"});
  */
-
-exports.flatten = function (arr, ret) {
-  ret = ret || [];
-  var len = arr.length;
-  for (var i = 0; i < len; ++i) {
-    if (Array.isArray(arr[i])) {
-      exports.flatten(arr[i], ret);
-    } else {
-      ret.push(arr[i]);
-    }
-  }
-  return ret;
-};
-
-
-
-
-
-
-
 
 
 
