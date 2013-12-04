@@ -2,7 +2,7 @@
   "name": "deep-routes",
   "description":"route parser utilities for deepjs",
   "author":"Gilles Coomans <gilles.coomans@gmail.com>", 
-  "version": "0.1.0",
+  "version": "0.1.1",
   "contributors": ["Philippe Delabye <phil@chemicalrules.net>"],
   "licenses": [
     {
