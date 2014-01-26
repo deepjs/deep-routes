@@ -44,7 +44,13 @@ define(["require", "deepjs/deep"], function(require, deep) {
     var createKeytest = function(keyName, optional) {
         return function(splittedRoute, output) {
             //console.log("key test : ", keyName, " - optional : ", optional);
-            if (splittedRoute[0] == keyName) {
+            var ok = false;
+            if(keyName.forEach)
+                ok = deep.utils.inArray(splittedRoute[0], keyName);
+            else
+                ok = (splittedRoute[0] === keyName);
+            if(ok)
+            {
                 //console.log("$$$$$$$$$$$$ key test match : ", splittedRoute[0]);
                 splittedRoute.shift();
                 return splittedRoute;
@@ -101,7 +107,6 @@ define(["require", "deepjs/deep"], function(require, deep) {
             var originalPath = path.slice();
             output = output || {};
             var self = this;
-
             var ok = this.tests
                 .every(function(t) {
                     path = t.call(self, path, output);
@@ -116,7 +121,6 @@ define(["require", "deepjs/deep"], function(require, deep) {
                 path: (ok)?path:originalPath
             };
             //console.log("descriptor match : ", path, " - res : ", ok, res.output, res.path);
-
             if (ok)
                 return res;
             return false;
@@ -128,9 +132,12 @@ define(["require", "deepjs/deep"], function(require, deep) {
             var tests = [];
             var p = router;
             var count = 0;
-
-            if (p[count] == '?') {
+            if (p[0] == '?') {
                 descriptor.optional = true;
+                count++;
+            }
+            else if (p[0] == '!') {
+                descriptor.inverse = true;
                 count++;
             }
             if (p[count] == '/')
@@ -159,7 +166,7 @@ define(["require", "deepjs/deep"], function(require, deep) {
                     //console.log("parse : var type : ", type);
                     var parser = deep.router.types[type];
                     if (!parser)
-                        throw deep.errors.Route('error : missformed route : ', router);
+                        throw deep.errors.Route('error : missformed route : no parser with type : '+type, router);
                     count += 2;
                     end = p.indexOf("/", count);
                     //console.log("var end : ", end);
@@ -177,17 +184,22 @@ define(["require", "deepjs/deep"], function(require, deep) {
                 } else // key
                 {
                     end = p.indexOf("/", count);
+                    if(end == -1)
+                        end = p.length;
                     var keyName = p.substring(count, end);
-                    count = end;
+                    if(keyName[0] == '[')
+                        keyName = keyName.substring(1,keyName.length-1).split(',');
                     //console.log("parsing key : ", keyName);
                     handler = createKeytest(keyName, optional);
                     tests.push(handler);
+                    count = end;
+                    
                 }
                 //console.log("end loop : ", p.substring(count), p[count]);
                 if (p[count] == "/")
                     count++;
                 else if (!handler || count < p.length) {
-                    throw deep.errors.Route('error : missformed route : ', router);
+                    throw deep.errors.Route('error : missformed route (!handler || count < p.length) : ', router);
                 }
             }
             descriptor.tests = tests;
@@ -237,7 +249,7 @@ define(["require", "deepjs/deep"], function(require, deep) {
                 if(path[0] === '')
                     path.shift();
             }
-            var originalPath = path.slice();
+            var originalPath = path.slice(), current = null;
             output = output || {};
             var res = {
                 path:path,
@@ -245,7 +257,7 @@ define(["require", "deepjs/deep"], function(require, deep) {
             };
             //console.log("_____________ mapper.match : ", path)
             for (var i = 0; i < tests.length; ++i) {
-                //path = originalPath.slice();
+                current = path.slice();
                 var handler = tests[i],
                     o = { controllerNode:handler.controllerNode, childs:null };
                 //console.log("___ try entry : ", handler.name, handler.controllerNode.path, path );
@@ -255,10 +267,17 @@ define(["require", "deepjs/deep"], function(require, deep) {
                     if (temp) {
                         path = res.path = temp.path;
                         o.output = temp.output;
-                        //console.log("***** res mapper match router : ", temp);
+                        console.log("***** res mapper match router : ", temp);
+                        if(handler.router.inverse)
+                        {
+                            console.log("route was inversed")
+                            path = current;
+                            continue;
+                        }
                     }
-                    else if(!handler.router.optional)
+                    else if(!handler.router.optional && !handler.router.inverse)
                         continue;
+                    
                 }
                 res.matched.push(o);
                 if (path.length === 0)
