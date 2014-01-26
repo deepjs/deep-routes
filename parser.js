@@ -41,7 +41,7 @@ define(["require", "deepjs/deep"], function(require, deep) {
         return input;
     });
 
-    var createKeytest = function(keyName, optional) {
+    var createKeytest = function(keyName, optional, inversed) {
         return function(splittedRoute, output) {
             //console.log("key test : ", keyName, " - optional : ", optional);
             var ok = false;
@@ -55,26 +55,27 @@ define(["require", "deepjs/deep"], function(require, deep) {
                 splittedRoute.shift();
                 return splittedRoute;
             }
-            if (optional)
+            if (optional || inversed)
                 return splittedRoute;
             return false;
         };
     };
-    var createBlockTest = function(block, subroute, optional) {
+    var createBlockTest = function(block, subroute, optional, inversed) {
         return function(splittedRoute, output) {
             // from closure : optional + subroute = Router.compile( "/n:start/n:end", true )
             var ok = subroute.match(splittedRoute.slice(), deep.utils.copy(output), true);
             //console.log("$$$$$$$$ analyse block : res : ", ok, " - ", block, splittedRoute, optional);
             if (!ok)
-                if (!optional)
-                    return false;
-                else
+            {
+                if (optional || inversed)
                     return splittedRoute;
+                return false;
+            }
             deep.utils.up(ok.output, output);
             return ok.path;
         };
     };
-    var createVarTest = function(type, name, parser, optional) {
+    var createVarTest = function(type, name, parser, optional, inversed) {
         return function(splittedRoute, output) {
             //console.log("test variable : ", type, name, " - with : ", splittedRoute, " - optional : ", optional);
             // from closure : variable name (query) + type parser (q:) + optional
@@ -86,7 +87,7 @@ define(["require", "deepjs/deep"], function(require, deep) {
                 output[name] = res;
                 return splittedRoute;
             }
-            if (optional)
+            if (optional || inversed)
                 return splittedRoute;
             return false;
         };
@@ -146,9 +147,14 @@ define(["require", "deepjs/deep"], function(require, deep) {
             while (count < p.length) {
                 var optional = false,
                     end = null,
-                    handler = null;
+                    handler = null,
+                    inversed = false;
                 if (p[count] == "?") {
                     optional = true;
+                    count++;
+                }
+                else if (p[count] == '!') {
+                    inversed = true;
                     count++;
                 }
                 if (p[count] == '(') // block
@@ -158,7 +164,7 @@ define(["require", "deepjs/deep"], function(require, deep) {
                     var subroute = deep.router.compile(block);
                     //console.log("___________________________________ end parsing block");
                     count += block.length + 2;
-                    handler = createBlockTest(block, subroute, optional);
+                    handler = createBlockTest(block, subroute, optional, inversed);
                     tests.push(handler);
                 } else if (p[count + 1] == ":") // variable
                 {
@@ -179,7 +185,7 @@ define(["require", "deepjs/deep"], function(require, deep) {
                         count = p.length;
                     }
                     //console.log("parsing var : ", type, name);
-                    handler = createVarTest(type, name, parser, optional);
+                    handler = createVarTest(type, name, parser, optional, inversed);
                     tests.push(handler);
                 } else // key
                 {
@@ -190,7 +196,7 @@ define(["require", "deepjs/deep"], function(require, deep) {
                     if(keyName[0] == '[')
                         keyName = keyName.substring(1,keyName.length-1).split(',');
                     //console.log("parsing key : ", keyName);
-                    handler = createKeytest(keyName, optional);
+                    handler = createKeytest(keyName, optional, inversed);
                     tests.push(handler);
                     count = end;
                     
@@ -212,7 +218,7 @@ define(["require", "deepjs/deep"], function(require, deep) {
         var mapper = deep.router.createMapper(map);
         deep.route = function(route){
             var res = mapper.match(route);
-            console.log("deep.route : matched res :  ", res);
+            //console.log("deep.route : matched res :  ", res);
             if(res)
                 return doRoute(res.matched);
             return deep.when(null);
@@ -257,9 +263,10 @@ define(["require", "deepjs/deep"], function(require, deep) {
             };
             //console.log("_____________ mapper.match : ", path)
             for (var i = 0; i < tests.length; ++i) {
-                current = path.slice();
                 var handler = tests[i],
-                    o = { controllerNode:handler.controllerNode, childs:null };
+                o = { controllerNode:handler.controllerNode, childs:null };
+                current = path.slice();
+            
                 //console.log("___ try entry : ", handler.name, handler.controllerNode.path, path );
                 if (handler.router) {
                     //console.log("____________________________________________________ try router : ", handler.router.original );
@@ -267,10 +274,10 @@ define(["require", "deepjs/deep"], function(require, deep) {
                     if (temp) {
                         path = res.path = temp.path;
                         o.output = temp.output;
-                        console.log("***** res mapper match router : ", temp);
+                        //console.log("***** res mapper match router : ", temp);
                         if(handler.router.inverse)
                         {
-                            console.log("route was inversed")
+                            //console.log("route was inversed")
                             path = current;
                             continue;
                         }
@@ -280,8 +287,8 @@ define(["require", "deepjs/deep"], function(require, deep) {
                     
                 }
                 res.matched.push(o);
-                if (path.length === 0)
-                    break;
+                //if (path.length === 0)
+                //    continue;
                 if(handler.childs)
                 {
                     //console.log("____ try childs");
@@ -293,8 +300,8 @@ define(["require", "deepjs/deep"], function(require, deep) {
                     }
                     //console.log("____ end childs matched : ", r);
                 }
-                if (path.length === 0)
-                    break;
+                //if (path.length === 0)
+                 //   break;
             }
             if(res.matched.length === 0)
                 res.path = originalPath;
@@ -306,7 +313,7 @@ define(["require", "deepjs/deep"], function(require, deep) {
 
 
     var doRoute = function(matched){
-        console.log("doRoute : matched : ", matched);
+        //console.log("doRoute : matched : ", matched);
         var loadTree =  function(matched, parentParams){
             var loading = [];
             matched.forEach(function(m){
