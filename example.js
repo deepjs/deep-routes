@@ -1,6 +1,17 @@
 var exampleMap = {
     topbar:{
-        router:"!/login",
+        router:"!/[login,register]",
+        what:"json::/json/test.json",
+        how:"swig::/templates/simple.html",
+        where:"dom.htmlOf::#content"
+    },
+    footer:{
+        router:"!/register",
+        what:"json::/json/test.json",
+        how:"swig::/templates/simple.html",
+        where:"dom.htmlOf::#content"
+    },
+    always:{
         what:"json::/json/test.json",
         how:"swig::/templates/simple.html",
         where:"dom.htmlOf::#content"
@@ -39,5 +50,5 @@ var exampleMap = {
 };
 
 deep.router.createRootMapper(exampleMap);
-deep.route("/campaign/2/update/13");
-
+//deep.route("/login").log();
+deep.route("/campaign/2/update/13").log();
