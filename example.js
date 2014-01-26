@@ -1,5 +1,6 @@
 var exampleMap = {
     topbar:{
+        router:"!/login",
         what:"json::/json/test.json",
         how:"swig::/templates/simple.html",
         where:"dom.htmlOf::#content"
@@ -37,15 +38,6 @@ var exampleMap = {
     }
 };
 
+deep.router.createRootMapper(exampleMap);
+deep.route("/campaign/2/update/13");
 
-deep.store.Object.create("view", exampleMap,)
-
-var mapper = deep.router.createMapper(exampleMap);
-console.log("mapper : ", mapper);
-//var res = mapper.match("/campaign/?id=2/info/13");
-var res = mapper.match("/campaign/2/update/13");
-if(res)
-    deep.route(res.matched);
-
-
-deep.
