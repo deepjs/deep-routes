@@ -2,7 +2,8 @@
 if (typeof define !== 'function') {
     var define = require('amdefine')(module);
 }
-define(["require", "deepjs/deep"], function(require, deep) {
+define(["require", "deepjs/deep"], function(require, deep)
+{
     deep.router = {};
 
     deep.errors.Route = function(msg, report, fileName, lineNum) {
@@ -114,8 +115,7 @@ define(["require", "deepjs/deep"], function(require, deep) {
                     //console.log("run temp : ", path);
                     if (path)
                         return true;
-                    else
-                        return false;
+                    return false;
                 });
             var res = {
                 output: output,
@@ -130,10 +130,10 @@ define(["require", "deepjs/deep"], function(require, deep) {
             descriptor.tests = [router];
             return descriptor;
         } else {
-            var tests = [];
-            var p = router;
-            var count = 0;
-            if (p[0] == '?') {
+            var p = router,
+                tests = [],
+                count = 0;
+            if (p[0] == '?')    {
                 descriptor.optional = true;
                 count++;
             }
@@ -213,47 +213,82 @@ define(["require", "deepjs/deep"], function(require, deep) {
         return descriptor;
     };
 
-
-    deep.router.createRootMapper = function(map) {
-        var mapper = deep.router.createMapper(map);
-        deep.route = function(route){
-            var res = mapper.match(route);
-            //console.log("deep.route : matched res :  ", res);
-            if(res)
-                return doRoute(res.matched);
-            return deep.when(null);
-        };
-        return deep.route;
-    };
-    deep.router.createMapper = function(map, notRoot) {
-        var mapper = {
-            _deep_mapper_: true,
-            isRoot: !notRoot
-        };
-        var tests = [];
-        var nodes = deep.query(map, "./*", { resultType:"full" })
-        .forEach(function(node){
-            var entry = node.value;
-            var entryName = node.key;
-            var router = null;
-            if (entry.router)
-                router = deep.router.compile(entry.router);
-            //console.log("_______________________ end create router");
-            var mapNode = {
-                name:entryName,
-                router: router,
-                childs: null,
-                controllerNode: node
+    deep.router.createRootMapper = function(map)
+    {
+        return deep.flatten(map)
+        .done(function(map){
+            var mapper = new deep.RouteMapper(map);
+            deep.route = function(route){
+                var res = mapper.match(route);
+                //console.log("deep.route : matched res :  ", res);
+                if(res)
+                    return doRoute(res.matched);
+                return deep.when(null);
             };
-            mapNode.childs = deep.router.createMapper(deep.query(node, "./subs", {resultType:"full"}), true);
-            tests.push(mapNode);
+            return mapper;
         });
+    };
 
-        mapper.match = function(path, output) {
+    deep.RouteMapper = function(map, root, parent){
+        this._deep_mapper_ = true;
+        this.root = root || null;
+        this.tests = [];
+        this.parent = parent;
+        var mapper = this;
+        if(map)
+            var nodes = deep.query(map, "./*", { resultType:"full" })
+            .forEach(function(node){
+                var entry = node.value,
+                    entryName = node.key,
+                    router = null;
+                if (entry.route)
+                    router = deep.router.compile(entry.route);
+                var mapNode = {
+                    name: entryName,
+                    router: router,
+                    childs: null,
+                    controllerNode: node
+                };
+                var ownMapper = new deep.RouteMapper(null, mapper.root || mapper, mapper);
+                ownMapper.tests = [mapNode];
+                entry.route = function(route)
+                {
+                    var res = ownMapper.route(route);
+                    //console.log("View.route.matched : ", matched.matched)
+                    return doRoute(res.matched);
+                };
+                
+                mapNode.childs = new deep.RouteMapper(deep.query(node, "./subs", {resultType:"full"}), mapper.root || mapper, mapper);
+                mapper.tests.push(mapNode);
+            });
+    };
+    deep.RouteMapper.prototype = {
+        route:function(r){
+            if(r[0] == ".")
+            {
+                if(r[1] == ".")     // from parent
+                {
+                    if(r[3] == '.')
+                        return this.parent.route(r.substring(3));
+                    return this.parent.route(r.substring(2));
+                }
+                else                // from me
+                    return this.match(r.substring(1));
+            }
+            else        // from root
+            {
+                if(this.root)
+                    return this.root.match(r);
+                return this.match(r);
+            }
+        },
+        match : function (path, output) {
             if (!path.forEach) {
                 path = path.split("/");
                 if(path[0] === '')
                     path.shift();
+                if(path[path.length-1] === '')          // MODE STRICT = false
+                    path.pop();
             }
             var originalPath = path.slice(), current = null;
             output = output || {};
@@ -262,11 +297,10 @@ define(["require", "deepjs/deep"], function(require, deep) {
                 matched:[]
             };
             //console.log("_____________ mapper.match : ", path)
-            for (var i = 0; i < tests.length; ++i) {
-                var handler = tests[i],
+            for (var i = 0; i < this.tests.length; ++i) {
+                var handler = this.tests[i],
                 o = { controllerNode:handler.controllerNode, childs:null };
                 current = path.slice();
-            
                 //console.log("___ try entry : ", handler.name, handler.controllerNode.path, path );
                 if (handler.router) {
                     //console.log("____________________________________________________ try router : ", handler.router.original );
@@ -284,11 +318,8 @@ define(["require", "deepjs/deep"], function(require, deep) {
                     }
                     else if(!handler.router.optional && !handler.router.inverse)
                         continue;
-                    
                 }
                 res.matched.push(o);
-                //if (path.length === 0)
-                //    continue;
                 if(handler.childs)
                 {
                     //console.log("____ try childs");
@@ -300,20 +331,21 @@ define(["require", "deepjs/deep"], function(require, deep) {
                     }
                     //console.log("____ end childs matched : ", r);
                 }
-                //if (path.length === 0)
-                 //   break;
             }
+            if(this.isRoot && res.path.length > 0)
+                res.matched = [];
             if(res.matched.length === 0)
                 res.path = originalPath;
             // console.log("_____________ end mapper.match");
             return res;
-        };
-        return mapper;
+        }
     };
 
 
     var doRoute = function(matched){
         //console.log("doRoute : matched : ", matched);
+        if(!matched.forEach)
+            matched = [matched];
         var loadTree =  function(matched, parentParams){
             var loading = [];
             matched.forEach(function(m){
@@ -353,12 +385,12 @@ define(["require", "deepjs/deep"], function(require, deep) {
                     var entry = controllerNode.value;
                     var r = null;
                     if(entry.refresh)
-                        r = entry.refresh(null, entry.params);
+                        r = entry.refresh(entry.params, null);
                     else
-                        r = "view refreshed : "+controllerNode.path+ " - with : "+JSON.stringify(entry.params);
+                        r = controllerNode.path+ " - with : "+JSON.stringify(entry.params);
                    deep.when(r)
                    .done(function(refreshed){
-                        console.log("REFRESHED : ", refreshed);
+                        console.log("result : ", refreshed);
                         if(m.subloads)
                             refreshAll(m.subloads);
                    })
@@ -378,7 +410,6 @@ define(["require", "deepjs/deep"], function(require, deep) {
             return deep.all(allRender);
         return deep.when(null);
     };
-
 
 
 /*

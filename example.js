@@ -1,54 +1,48 @@
 var exampleMap = {
     topbar:{
-        router:"!/[login,register]",
-        what:"json::/json/test.json",
-        how:"swig::/templates/simple.html",
-        where:"dom.htmlOf::#content"
+        route:"!/[login,register]"
     },
     footer:{
-        router:"!/register",
-        what:"json::/json/test.json",
-        how:"swig::/templates/simple.html",
-        where:"dom.htmlOf::#content"
+        route:"/!register"
     },
-    always:{
-        what:"json::/json/test.json",
-        how:"swig::/templates/simple.html",
-        where:"dom.htmlOf::#content"
-    },
-    campaign:{
-        router:"/campaign/s:id",
-        what:"camp::{ id }",
+    campaign:deep.View({
+        route:"/campaign/s:id",
+        how:"hello campaign",
         subs:{
           info:{
-            router:"?/info/s:id",
-            what:"info::{ id }"
+            route:"?/info/s:id"
           },
           update:{
-            what:"update::{ id }",
-            router:"/update/s:id",
+            route:"/update/s:id",
             subs:{
               profile:{
-                what:"profile::?updateID={ parent.id }"
+                route:""
               }
             }
           }
         }
-      },
+      }),
+    always:{
+    },
     campaigns:{
-        router:"/campaign/?q:query/?(/i:start/i:end)",
-        what:"campaign({ start },{ end })::{ query }",
-        how:"swig::...",
+        route:"/campaigns/?q:query/?(/i:start/i:end)",
         subs:{
           info:{
-            router:"?/info/s:id",
-            what:"info::{ id }",
-            where:"dom.appendTo::...."
+            route:"?/info/s:id"
           }
         }
     }
 };
 
 deep.router.createRootMapper(exampleMap);
-//deep.route("/login").log();
-deep.route("/campaign/2/update/13").log();
+
+deep.route("/campaign/12/info/34/update/13");
+console.log("\n\n\n");
+exampleMap.campaign.route("../campaign/12");
+
+//deep.route("/login");
+
+
+
+
+
