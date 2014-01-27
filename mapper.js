@@ -15,8 +15,10 @@ define(["require", "deepjs/deep", "./parser"], function(require, deep)
             var mapper = new deep.router.Mapper(map);
             deep.route = function(route){
                 var res = mapper.match(route);
-                //console.log("deep.route : matched res :  ", res);
-                if(res)
+                //console.log("deep.route : matched res :  ", res.path);
+                if(!res || res.matched.length === 0)
+                    console.log("nothing match with route : ", route);
+                else if(res)
                     return doRoute(res.matched);
                 return deep.when(null);
             };
@@ -126,9 +128,9 @@ define(["require", "deepjs/deep", "./parser"], function(require, deep)
                     //console.log("____ end childs matched : ", r);
                 }
             }
-            if(this.isRoot && res.path.length > 0)
+            if(!this.root && res.path.length > 0)
                 res.matched = [];
-            if(res.matched.length === 0)
+            else if(res.matched.length === 0)
                 res.path = originalPath;
             // console.log("_____________ end mapper.match");
             return res;
