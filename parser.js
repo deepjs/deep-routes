@@ -52,21 +52,19 @@ define(["require", "deepjs/deep"], function(require, deep)
             var originalPath = path.slice();
             output = output || {};
             var self = this;
-            var ok = this.tests
-                .every(function(t) {
-                    path = t.call(self, path, output);
-                    //console.log("run temp : ", path);
-                    if (path)
-                        return true;
-                    return false;
-                });
-            var res = {
+            var ok = this.tests.every(function(t) {
+                path = t.call(self, path, output);
+                //console.log("run temp : ", path);
+                if (path)
+                    return true;
+                return false;
+            });
+            //console.log("descriptor match : ", path, " - res : ", ok, res.output, res.path);
+            if (ok)
+                return {
                 output: output,
                 path: (ok)?path:originalPath
             };
-            //console.log("descriptor match : ", path, " - res : ", ok, res.output, res.path);
-            if (ok)
-                return res;
             return false;
         };
         // _______________  DO COMPILATION
@@ -84,6 +82,11 @@ define(["require", "deepjs/deep"], function(require, deep)
             else if (p[0] == '!') {
                 descriptor.inverse = true;
                 count++;
+            }
+            if (p[count] == '.')
+            {
+                count++;
+                descriptor.local = true;
             }
             if (p[count] == '/')
                 count++;
@@ -167,6 +170,8 @@ define(["require", "deepjs/deep"], function(require, deep)
                 ok = (splittedRoute[0] === keyName);
             if(ok)
             {
+                if(inversed)
+                    return false;
                 //console.log("$$$$$$$$$$$$ key test match : ", splittedRoute[0]);
                 splittedRoute.shift();
                 return splittedRoute;
@@ -186,6 +191,8 @@ define(["require", "deepjs/deep"], function(require, deep)
                     return splittedRoute;
                 return false;
             }
+            if(inversed)
+                return false;
             deep.utils.up(ok.output, output);
             return ok.path;
         };
@@ -196,6 +203,8 @@ define(["require", "deepjs/deep"], function(require, deep)
             var res = parser(splittedRoute[0]);
             //console.log("res : ", res);
             if (res !== null) {
+                if(inversed)
+                    return false;
                 //console.log("$$$$$$$$$$ variable match : ", name, " : ", res);
                 splittedRoute.shift();
                 output[name] = res;

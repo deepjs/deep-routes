@@ -1,5 +1,4 @@
 
-
 REFRESH
 refresh selection mecanisme
 refresh re-params mecanisme
@@ -15,5 +14,7 @@ deep-link / SEO or not : deep-historic
 deep.interpret : add '+' management					OK
 
 deep.router.Mapper : work on states						
+
+add ./ and root managament in mapper
 
 

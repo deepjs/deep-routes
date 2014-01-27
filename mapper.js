@@ -78,7 +78,8 @@ define(["require", "deepjs/deep", "./parser"], function(require, deep)
                 return this.match(r);
             }
         },
-        match : function (path, output) {
+        match : function (path, output, base) {
+
             if (!path.forEach) {
                 path = path.split("/");
                 if(path[0] === '')
@@ -86,6 +87,9 @@ define(["require", "deepjs/deep", "./parser"], function(require, deep)
                 if(path[path.length-1] === '')          // MODE STRICT = false
                     path.pop();
             }
+            if(!base)
+                base = path.slice();
+            base._root = true;
             var originalPath = path.slice(), current = null;
             output = output || {};
             var res = {
@@ -97,10 +101,22 @@ define(["require", "deepjs/deep", "./parser"], function(require, deep)
                 var handler = this.tests[i],
                 o = { controllerNode:handler.controllerNode, childs:null };
                 current = path.slice();
+
                 //console.log("___ try entry : ", handler.name, handler.controllerNode.path, path );
                 if (handler.router) {
                     //console.log("____________________________________________________ try router : ", handler.router.original );
-                    var temp = handler.router.match(path);
+                
+                    var cpath = path;
+                    if(!handler.router.local)
+                    {
+                        //console.log("non local router : ",path, base);
+                        cpath = base.slice();
+                        cpath._root = true;
+                    }
+                    //else
+                      //  console.log("local router : ",path, base);
+
+                    var temp = handler.router.match(cpath);
                     if (temp) {
                         path = res.path = temp.path;
                         o.output = temp.output;
@@ -128,9 +144,11 @@ define(["require", "deepjs/deep", "./parser"], function(require, deep)
                     //console.log("____ end childs matched : ", r);
                 }
             }
-            if(!this.root && res.path.length > 0)
-                res.matched = [];
-            else if(res.matched.length === 0)
+            //console.log("_____________ end mapper.match", this.root, res.matched, res.path);
+            //if(!this.root && res.path.length > 0)
+            //    res.matched = [];
+            //else
+             if(res.matched.length === 0)
                 res.path = originalPath;
             // console.log("_____________ end mapper.match");
             return res;
