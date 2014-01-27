@@ -1,98 +1,41 @@
+/**
+ * @author Gilles Coomans <gilles.coomans@gmail.com>
+ */
 "use strict";
 if (typeof define !== 'function') {
     var define = require('amdefine')(module);
 }
 define(["require", "deepjs/deep"], function(require, deep)
 {
-    deep.router = {};
-
-    deep.errors.Route = function(msg, report, fileName, lineNum) {
-        if (typeof msg === 'object')
-            report = msg;
-        if (!msg)
-            msg = "RouterError : ";
-        return this.Error(500, msg, report, fileName, lineNum);
-    };
+    deep.router = deep.router || {};
     deep.router.types = {};
     deep.router.addType = function(prefix, parser) {
         deep.router.types[prefix] = parser;
     };
-    deep.router.addType("i:", function(input) {
+    deep.router.addType("i:", function(input) { // integer
         var r = parseInt(input, 10);
         if (!isNaN(r) && r !== Infinity)
             return r;
         return null;
     });
-    deep.router.addType("q:", function(input) {
+    deep.router.addType("q:", function(input) {     // query
         if (input === null || typeof input == 'undefined')
             return null;
         if (input[0] == "?")
             return input;
         return null;
     });
-    deep.router.addType("f:", function(input) {
+    deep.router.addType("f:", function(input) {     // float
         var r = parseFloat(input);
         if (!isNaN(r) && r !== Infinity)
             return r;
         return null;
     });
-    deep.router.addType("s:", function(input) {
+    deep.router.addType("s:", function(input) {        // string
         if (input === null || typeof input == 'undefined')
             return null;
         return input;
     });
-
-    var createKeytest = function(keyName, optional, inversed) {
-        return function(splittedRoute, output) {
-            //console.log("key test : ", keyName, " - optional : ", optional);
-            var ok = false;
-            if(keyName.forEach)
-                ok = deep.utils.inArray(splittedRoute[0], keyName);
-            else
-                ok = (splittedRoute[0] === keyName);
-            if(ok)
-            {
-                //console.log("$$$$$$$$$$$$ key test match : ", splittedRoute[0]);
-                splittedRoute.shift();
-                return splittedRoute;
-            }
-            if (optional || inversed)
-                return splittedRoute;
-            return false;
-        };
-    };
-    var createBlockTest = function(block, subroute, optional, inversed) {
-        return function(splittedRoute, output) {
-            // from closure : optional + subroute = Router.compile( "/n:start/n:end", true )
-            var ok = subroute.match(splittedRoute.slice(), deep.utils.copy(output), true);
-            //console.log("$$$$$$$$ analyse block : res : ", ok, " - ", block, splittedRoute, optional);
-            if (!ok)
-            {
-                if (optional || inversed)
-                    return splittedRoute;
-                return false;
-            }
-            deep.utils.up(ok.output, output);
-            return ok.path;
-        };
-    };
-    var createVarTest = function(type, name, parser, optional, inversed) {
-        return function(splittedRoute, output) {
-            //console.log("test variable : ", type, name, " - with : ", splittedRoute, " - optional : ", optional);
-            // from closure : variable name (query) + type parser (q:) + optional
-            var res = parser(splittedRoute[0]);
-            //console.log("res : ", res);
-            if (res !== null) {
-                //console.log("$$$$$$$$$$ variable match : ", name, " : ", res);
-                splittedRoute.shift();
-                output[name] = res;
-                return splittedRoute;
-            }
-            if (optional || inversed)
-                return splittedRoute;
-            return false;
-        };
-    };
 
     deep.router.compile = function(router) {
         var descriptor = {
@@ -126,6 +69,7 @@ define(["require", "deepjs/deep"], function(require, deep)
                 return res;
             return false;
         };
+        // _______________  DO COMPILATION
         if (typeof router === 'function') {
             descriptor.tests = [router];
             return descriptor;
@@ -213,256 +157,55 @@ define(["require", "deepjs/deep"], function(require, deep)
         return descriptor;
     };
 
-    deep.router.createRootMapper = function(map)
-    {
-        return deep.flatten(map)
-        .done(function(map){
-            var mapper = new deep.RouteMapper(map);
-            deep.route = function(route){
-                var res = mapper.match(route);
-                //console.log("deep.route : matched res :  ", res);
-                if(res)
-                    return doRoute(res.matched);
-                return deep.when(null);
-            };
-            return mapper;
-        });
-    };
-
-    deep.RouteMapper = function(map, root, parent){
-        this._deep_mapper_ = true;
-        this.root = root || null;
-        this.tests = [];
-        this.parent = parent;
-        var mapper = this;
-        if(map)
-            var nodes = deep.query(map, "./*", { resultType:"full" })
-            .forEach(function(node){
-                var entry = node.value,
-                    entryName = node.key,
-                    router = null;
-                if (entry.route)
-                    router = deep.router.compile(entry.route);
-                var mapNode = {
-                    name: entryName,
-                    router: router,
-                    childs: null,
-                    controllerNode: node
-                };
-                var ownMapper = new deep.RouteMapper(null, mapper.root || mapper, mapper);
-                ownMapper.tests = [mapNode];
-                entry.route = function(route)
-                {
-                    var res = ownMapper.route(route);
-                    //console.log("View.route.matched : ", matched.matched)
-                    return doRoute(res.matched);
-                };
-                
-                mapNode.childs = new deep.RouteMapper(deep.query(node, "./subs", {resultType:"full"}), mapper.root || mapper, mapper);
-                mapper.tests.push(mapNode);
-            });
-    };
-    deep.RouteMapper.prototype = {
-        route:function(r){
-            if(r[0] == ".")
+    var createKeytest = function(keyName, optional, inversed) {
+        return function(splittedRoute, output) {
+            //console.log("key test : ", keyName, " - optional : ", optional);
+            var ok = false;
+            if(keyName.forEach)
+                ok = deep.utils.inArray(splittedRoute[0], keyName);
+            else
+                ok = (splittedRoute[0] === keyName);
+            if(ok)
             {
-                if(r[1] == ".")     // from parent
-                {
-                    if(r[3] == '.')
-                        return this.parent.route(r.substring(3));
-                    return this.parent.route(r.substring(2));
-                }
-                else                // from me
-                    return this.match(r.substring(1));
+                //console.log("$$$$$$$$$$$$ key test match : ", splittedRoute[0]);
+                splittedRoute.shift();
+                return splittedRoute;
             }
-            else        // from root
+            if (optional || inversed)
+                return splittedRoute;
+            return false;
+        };
+    };
+    var createBlockTest = function(block, subroute, optional, inversed) {
+        return function(splittedRoute, output) {
+            var ok = subroute.match(splittedRoute.slice(), deep.utils.copy(output), true);
+            //console.log("$$$$$$$$ analyse block : res : ", ok, " - ", block, splittedRoute, optional);
+            if (!ok)
             {
-                if(this.root)
-                    return this.root.match(r);
-                return this.match(r);
+                if (optional || inversed)
+                    return splittedRoute;
+                return false;
             }
-        },
-        match : function (path, output) {
-            if (!path.forEach) {
-                path = path.split("/");
-                if(path[0] === '')
-                    path.shift();
-                if(path[path.length-1] === '')          // MODE STRICT = false
-                    path.pop();
-            }
-            var originalPath = path.slice(), current = null;
-            output = output || {};
-            var res = {
-                path:path,
-                matched:[]
-            };
-            //console.log("_____________ mapper.match : ", path)
-            for (var i = 0; i < this.tests.length; ++i) {
-                var handler = this.tests[i],
-                o = { controllerNode:handler.controllerNode, childs:null };
-                current = path.slice();
-                //console.log("___ try entry : ", handler.name, handler.controllerNode.path, path );
-                if (handler.router) {
-                    //console.log("____________________________________________________ try router : ", handler.router.original );
-                    var temp = handler.router.match(path);
-                    if (temp) {
-                        path = res.path = temp.path;
-                        o.output = temp.output;
-                        //console.log("***** res mapper match router : ", temp);
-                        if(handler.router.inverse)
-                        {
-                            //console.log("route was inversed")
-                            path = current;
-                            continue;
-                        }
-                    }
-                    else if(!handler.router.optional && !handler.router.inverse)
-                        continue;
-                }
-                res.matched.push(o);
-                if(handler.childs)
-                {
-                    //console.log("____ try childs");
-                    var r = handler.childs.match(path);
-                    if(r)
-                    {
-                        o.childs = r.matched;
-                        path = res.path = r.path;
-                    }
-                    //console.log("____ end childs matched : ", r);
-                }
-            }
-            if(this.isRoot && res.path.length > 0)
-                res.matched = [];
-            if(res.matched.length === 0)
-                res.path = originalPath;
-            // console.log("_____________ end mapper.match");
-            return res;
-        }
-    };
-
-
-    var doRoute = function(matched){
-        //console.log("doRoute : matched : ", matched);
-        if(!matched.forEach)
-            matched = [matched];
-        var loadTree =  function(matched, parentParams){
-            var loading = [];
-            matched.forEach(function(m){
-                if(!m.output)
-                    m.output = {};
-                var controllerNode = m.controllerNode;
-                var entry = controllerNode.value;
-                m.output.parent = parentParams || {};
-                entry.params = m.output;
-                //console.log("matched : " + entry.router + " - "+ JSON.stringify(entry.params));
-                if(m.childs)
-                    m.subloads = loadTree(m.childs, m.output);
-                var  p = deep(controllerNode)
-                .load()
-                .done(function(res){
-                    m.loaded = res;
-                    return m;
-                })
-                .fail(function(e){
-                    m.error = e;
-                    console.error("error while loading controller : ", controllerNode.path, " : ", e);
-                    return m;
-                });
-                loading.push(p);
-            });
-            return loading;
+            deep.utils.up(ok.output, output);
+            return ok.path;
         };
-        var roots = loadTree(matched);
-        var allRender = [];
-        var refreshAll = function(currents){
-            currents.forEach(function(m){
-                var p = deep.when(m)
-                .done(function(m){
-                    if(m.error)
-                        return m.error;
-                    var controllerNode = m.controllerNode;
-                    var entry = controllerNode.value;
-                    var r = null;
-                    if(entry.refresh)
-                        r = entry.refresh(entry.params, null);
-                    else
-                        r = controllerNode.path+ " - with : "+JSON.stringify(entry.params);
-                   deep.when(r)
-                   .done(function(refreshed){
-                        console.log("result : ", refreshed);
-                        if(m.subloads)
-                            refreshAll(m.subloads);
-                   })
-                   .fail(function(e){
-                        console.error("error while rendering controller : ", e, m);
-                   });
-                })
-                .fail(function(e){
-                    console.error("error while loading controller : ", e, m);
-                });
-                allRender.push(p);
-            });
-        };
-        if(roots)
-            refreshAll(roots);
-        if(allRender.length > 0)
-            return deep.all(allRender);
-        return deep.when(null);
     };
-
-
-/*
-    mapper result :
-
-*/
-    /*
-var descriptor = deep.router.compile("/campaign/?q:query/?(/i:start/i:end)");
-console.log("descriptor : ", descriptor);
-//descriptor;
-console.log(JSON.stringify(descriptor.match("/campaign/?id=12/1/3")));
-*/
-
-/*
-
-var exampleMap = {
-  campaigns:{
-    router:"/campaign/?q:query/?(/i:start/i:end)",
-    what:"camp({ start || 0 }, { end || 10 })::{ query || '?' }",
-    subs:{
-      info:{
-        router:"?/info/?s:id",
-        what:"info::{ id || '?' }"
-      }
-    }
-  },
-  campaign:{
-    router:"/campaign/s:id",
-    what:"camp::{ id }",
-    subs:{
-      info:{
-        router:"?/info/s:id",
-        what:"info::{ id || ('?campID='+parent.id) }"
-      },
-      update:{
-        what:"update::{ id }",
-        router:"/update/s:id",
-        subs:{
-          profile:{
-            what:"profile::?updateID={ parent.id }"
-          }
-        }
-      }
-    }
-  }
-};
-
-var mapper = deep.router.createMapper(exampleMap);
-mapper.match("/campaign/?id=2");
-
- */
-
-
+    var createVarTest = function(type, name, parser, optional, inversed) {
+        return function(splittedRoute, output) {
+            //console.log("test variable : ", type, name, " - with : ", splittedRoute, " - optional : ", optional);
+            var res = parser(splittedRoute[0]);
+            //console.log("res : ", res);
+            if (res !== null) {
+                //console.log("$$$$$$$$$$ variable match : ", name, " : ", res);
+                splittedRoute.shift();
+                output[name] = res;
+                return splittedRoute;
+            }
+            if (optional || inversed)
+                return splittedRoute;
+            return false;
+        };
+    };
 
     return deep.router;
 });
