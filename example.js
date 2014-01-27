@@ -42,8 +42,6 @@ exampleMap.campaign.route("../campaign/12");
 
 //deep.route("/login");
 
-
-
 /*
 
 
