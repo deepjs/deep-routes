@@ -7,16 +7,15 @@ var exampleMap = {
     },
     campaign:deep.View({
         route:"/campaign/s:id",
-        how:"hello campaign",
+        how:"hello world { id }",
         subs:{
           info:{
-            route:"?/info/s:id"
+            route:"?./info/s:id"
           },
           update:{
-            route:"/update/s:id",
+            route:"./update/s:id",
             subs:{
               profile:{
-                route:""
               }
             }
           }
@@ -28,7 +27,7 @@ var exampleMap = {
         route:"/campaigns/?q:query/?(/i:start/i:end)",
         subs:{
           info:{
-            route:"?/info/s:id"
+            route:"?./info/s:id"
           }
         }
     }
@@ -36,9 +35,17 @@ var exampleMap = {
 
 deep.router.createRootMapper(exampleMap);
 
+//console.profile("t");
 deep.route("/campaign/12/info/34/update/13");
 console.log("\n\n\n");
-exampleMap.campaign.route("../campaign/12");
+deep.route("/campaign/67/info/34/update/56");
+//console.profileEnd("t");
+console.log("\n\n\n");
+exampleMap.campaign.subs.info.route("../info/14");
+
+
+
+deep.route()
 
 //deep.route("/login");
 

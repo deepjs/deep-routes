@@ -9,12 +9,16 @@ write/update route
 get route descriptor result
 get string route from templates	or controller
 
-deep-link / SEO or not : deep-historic 	
+deep-link / SEO or not : deep-historic 				
 
 deep.interpret : add '+' management					OK
 
 deep.router.Mapper : work on states						
 
-add ./ and root managament in mapper
+add ./ and root managament in Mapper 				OK
 
 
+redirection
+
+
+default route
