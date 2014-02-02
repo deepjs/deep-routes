@@ -74,12 +74,13 @@ define(["require", "deepjs/deep"], function(require, deep)
                     else if(p[count] == ".")
                     {
                         count ++;
-                        this.fromParent = 1;
+                        this.fromParent = 0;
                         while(p[count+1] == ".")
                         {
                             this.fromParent++;
                             count ++;
                         }
+                        console.log("fromParent : ", this.fromParent)
                     }
                 }
                 else if(p[count] == '/')
@@ -165,16 +166,15 @@ define(["require", "deepjs/deep"], function(require, deep)
             }
             index = index || 0;
             var firstIndex = index;
-            /*if(this.fromRoot)
-                index = 0;
-            else if (this.fromParent)
-                index -= this.fromParent;*/
             var catched = [];
             output = output || {};
             var self = this;
+            if(this.fromRoot)
+                index = 0;
+            else if(this.fromParent)
+                index -= this.fromParent;
             var ok = this.tests.every(function(t) {
                 var catched2 = t.call(self, parts, output, index);
-                //console.log("run temp : ", parts);
                 if (catched2)
                 {
                     if(catched2.forEach)
@@ -186,12 +186,9 @@ define(["require", "deepjs/deep"], function(require, deep)
                 }
                 return false;
             });
-            //var local = this.local;
-            //if(this.parent && !this.parent.root)
-            //    local = true;
             if (ok)
             {
-                //console.log("this.local", this.local, index, firstIndex, catched, this.parent)
+                console.log("Route catch : ", catched, output, parts, index)
                 return {
                     catched : catched,
                     output: output,
