@@ -5,6 +5,9 @@ var exampleMap = {
     footer:{
         route:"/!register"
     },
+    noCamp:{
+        route:"/!campaign"
+    },
     campaign:deep.View({
         route:"/campaign/s:id",
         how:"hello world { id }",
@@ -42,12 +45,13 @@ deep.route(exampleMap);
 //console.profile("t");
 //console.profile("t");
 deep.route("/campaign/12/info/34/update/13");
+//console.profileEnd("t");
 console.log(deep.getRoute());
 console.log("\n\n\n");
-
+//console.profileEnd("t");
 deep.route("/campaign/67/info/8998/update/56");
 console.log(deep.getRoute());
-//console.profileEnd("t");
+
 console.log("\n\n\n");
 
 
@@ -75,14 +79,15 @@ console.log(deep.getRoute());
 console.log("\n\n\n");
 
 
+
 console.log("getRoute : ", exampleMap.campaign.subs.info.getRoute("./info/7585858585"));
 console.log("getRoute : ", exampleMap.campaign.subs.info.getRoute("/campaign/15555/update/89"));
 console.log("getRoute : ", exampleMap.campaign.subs.info.getRoute("../info/7585858585"));
 console.log("getRoute : ", exampleMap.campaign.getRoute(">/info/111111/update/9988765544"));
 
 deep.getRoute();
-
 //console.profileEnd("t");
+
 
 
 
