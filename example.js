@@ -6,18 +6,22 @@ var exampleMap = {
         route:"/!register"
     },
     campaign:deep.View({
-        route:"./campaign/s:id",
+        route:"/campaign/s:id",
         how:"hello world { id }",
         subs:{
-          info:{
-            route:"?./info/s:id"
-          },
+          info:deep.View({
+            route:"?./info/s:id",
+            how:"hello info : { id | 'default' }"
+          }),
           update:{
             route:"./update/s:id",
             subs:{
               profile:{
               }
             }
+          },
+          test:{
+            route:"/campaign/s:id"
           }
         }
       }),
@@ -35,40 +39,50 @@ var exampleMap = {
 
 
 deep.route(exampleMap);
-
+//console.profile("t");
 //console.profile("t");
 deep.route("/campaign/12/info/34/update/13");
-console.log(deep.route());
+console.log(deep.getRoute());
 console.log("\n\n\n");
 
 deep.route("/campaign/67/info/8998/update/56");
-console.log(deep.route());
+console.log(deep.getRoute());
 //console.profileEnd("t");
 console.log("\n\n\n");
 
-exampleMap.campaign.subs.info.route("/campaign/22222/info/14");
-console.log(deep.route());
+
+exampleMap.campaign.subs.info.route("/campaign/22222");
+
+console.log(deep.getRoute());
 console.log("\n\n\n");
 
 exampleMap.campaign.subs.info.route("../info/56/update/27");
-console.log(deep.route());
+console.log(deep.getRoute());
 console.log("\n\n\n");
 
 exampleMap.campaign.subs.info.route("./info/444447");
-console.log(deep.route());
+console.log(deep.getRoute());
 console.log("\n\n\n");
 
 exampleMap.campaign.subs.info.route("../update/27");
-console.log(deep.route());
+console.log(deep.getRoute());
 console.log("\n\n\n");
+
+
+exampleMap.campaign.route(">/info/55555555/update/999999999999");
+
+console.log(deep.getRoute());
+console.log("\n\n\n");
+
 
 console.log("getRoute : ", exampleMap.campaign.subs.info.getRoute("./info/7585858585"));
 console.log("getRoute : ", exampleMap.campaign.subs.info.getRoute("/campaign/15555/update/89"));
 console.log("getRoute : ", exampleMap.campaign.subs.info.getRoute("../info/7585858585"));
+console.log("getRoute : ", exampleMap.campaign.getRoute(">/info/111111/update/9988765544"));
 
-deep.route();
+deep.getRoute();
 
-//deep.route("/login");
+//console.profileEnd("t");
 
 
 
