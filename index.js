@@ -21,6 +21,8 @@ define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-no
     require("./lib/mapper");
 
     var closure = {};
+    var emitter = new deep.Emitter();
+
     deep.printRouteMap = function(){
         if(!closure.node)
             return null;
@@ -43,21 +45,43 @@ define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-no
         }
         else if(route._deep_route_node_)
         {
+            if(closure.node)
+                closure.node.emitter = null;
             closure.node = route;
+            if(!route.emitter)
+                route.emitter = emitter;
             return route;
         }
         else if(typeof route === 'object')
             return deep.createRouteMap(route, strict)
             .done(function(node){
                 closure.node = node;
+                node.emitter = emitter;
             })
             .logError();
         else
         {
             if(!closure.node)
                 throw deep.errors.Error(500,"you need to define a root Route map before using deep.route.");
-            return closure.node.route(route);
+            return deep.when(closure.node.route(route)).done(function(s){
+                if(!s)
+                    return;
+                var em = closure.node.root;
+                if(!em)
+                    em = closure.node;
+                if(em.emitter)
+                    em.emitter.emit("refreshed");
+            });
         }
+    };
+
+    deep.route.on = function(type, callback)
+    {
+        emitter.on(type, callback);
+    };
+    deep.route.remove = function(type, callback)
+    {
+        emitter.remove(type, callback);
     };
 
     deep.route.refresh = function(){
