@@ -16,7 +16,7 @@ define(["require", "deepjs/deep", "./route", "./mapper"], function(require, deep
         return this.Error(500, msg, report, fileName, lineNum);
     };
 	require("./route");
-	require("./mapper");
+    require("./mapper");
 });
 
 

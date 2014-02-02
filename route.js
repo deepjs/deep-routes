@@ -69,8 +69,21 @@ define(["require", "deepjs/deep"], function(require, deep)
                 if (p[count] == '.')
                 {
                     count++;
-                    this.local = true;
+                    if(p[count] == '/')
+                        this.local = true;
+                    else if(p[count] == ".")
+                    {
+                        count ++;
+                        this.fromParent = 1;
+                        while(p[count+1] == ".")
+                        {
+                            this.fromParent++;
+                            count ++;
+                        }
+                    }
                 }
+                else if(p[count] == '/')
+                    this.fromRoot = true;
                 if (p[count] == '/')
                     count++;
                 // analyse current 
@@ -143,33 +156,47 @@ define(["require", "deepjs/deep"], function(require, deep)
             }
             return this;
         },
-        match:function(rest, output)
+        match:function(parts, index, output)
         {
-            if (!rest.forEach)
+            if (!parts.forEach)
             {
-                rest = rest.split("/");
-                rest.shift();
+                parts = parts.split("/");
+                parts.shift();
             }
-            else
-                rest = rest.slice();
+            index = index || 0;
+            var firstIndex = index;
+            /*if(this.fromRoot)
+                index = 0;
+            else if (this.fromParent)
+                index -= this.fromParent;*/
             var catched = [];
             output = output || {};
             var self = this;
             var ok = this.tests.every(function(t) {
-                rest = t.call(self, rest, output, catched);
-                //console.log("run temp : ", rest);
-                if (rest)
+                var catched2 = t.call(self, parts, output, index);
+                //console.log("run temp : ", parts);
+                if (catched2)
+                {
+                    if(catched2.forEach)
+                    {
+                        catched = catched.concat(catched2);
+                        index += catched2.length;
+                    }
                     return true;
+                }
                 return false;
             });
-            //console.log("descriptor match : ", rest, " - res : ", ok, res.output, res.rest);
+            //var local = this.local;
+            //if(this.parent && !this.parent.root)
+            //    local = true;
             if (ok)
             {
+                //console.log("this.local", this.local, index, firstIndex, catched, this.parent)
                 return {
-                    original: this.original,
                     catched : catched,
                     output: output,
-                    rest: rest
+                    parts: parts,
+                    index:(this.local)?index:firstIndex
                 };
             }
             return false;
@@ -179,60 +206,58 @@ define(["require", "deepjs/deep"], function(require, deep)
     // PRIVATES
     
     var createKeytest = function(keyName, optional, inversed) {
-        return function(splittedRoute, output, catched) {
+        return function(parts, output, index) {
             //console.log("key test : ", keyName, " - optional : ", optional);
+            
             var ok = false;
             if(keyName.forEach)
-                ok = deep.utils.inArray(splittedRoute[0], keyName);
+                ok = deep.utils.inArray(parts[index], keyName);
             else
-                ok = (splittedRoute[0] === keyName);
+                ok = (parts[index] === keyName);
             if(ok)
             {
+                //console.log("$$$$$$$$$$$$ key test match : ", splittedRoute[0]);
                 if(inversed)
                     return false;
-                catched.push(keyName);
-                //console.log("$$$$$$$$$$$$ key test match : ", splittedRoute[0]);
-                splittedRoute.shift();
-                return splittedRoute;
+                return [keyName];
+                //splittedRoute.shift();
             }
             if (optional || inversed)
-                return splittedRoute;
+                return true;
             return false;
         };
     };
     var createBlockTest = function(block, subroute, optional, inversed) {
-        return function(splittedRoute, output, catched) {
-            var ok = subroute.match(splittedRoute.slice(), deep.utils.copy(output), true);
+        return function(parts, output, index) {
+            var ok = subroute.match(parts, index);
             //console.log("$$$$$$$$ analyse block : res : ", ok, " - ", block, splittedRoute, optional);
             if (!ok)
             {
                 if (optional || inversed)
-                    return splittedRoute;
+                    return true;
                 return false;
             }
             if(inversed)
                 return false;
-            catched = catched.concat(ok.catched);
             deep.utils.up(ok.output, output);
-            return ok.rest;
+            return ok.catched;
         };
     };
     var createVarTest = function(type, name, parser, optional, inversed) {
-        return function(splittedRoute, output, catched) {
+        return function(parts, output, index) {
             //console.log("test variable : ", type, name, " - with : ", splittedRoute, " - optional : ", optional);
-            var res = parser(splittedRoute[0]);
+            var res = parser(parts[index]);
             //console.log("res : ", res);
             if (res !== null) {
                 if(inversed)
                     return false;
                 //console.log("$$$$$$$$$$ variable match : ", name, " : ", res);
-                catched.push(res);
-                splittedRoute.shift();
+                //splittedRoute.shift();
                 output[name] = res;
-                return splittedRoute;
+                return [res];
             }
             if (optional || inversed)
-                return splittedRoute;
+                return true;
             return false;
         };
     };

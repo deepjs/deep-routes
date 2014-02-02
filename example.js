@@ -6,6 +6,102 @@ var exampleMap = {
         route:"/!register"
     },
     campaign:deep.View({
+        route:"./campaign/s:id",
+        how:"hello world { id }",
+        subs:{
+          info:{
+            route:"?./info/s:id"
+          },
+          update:{
+            route:"./update/s:id",
+            subs:{
+              profile:{
+              }
+            }
+          }
+        }
+      }),
+    always:{
+    },
+    campaigns:{
+        route:"/campaigns/?q:query/?(/i:start/i:end)",
+        subs:{
+          info:{
+            route:"?./info/s:id"
+          }
+        }
+    }
+};
+
+
+deep.route(exampleMap);
+
+//console.profile("t");
+deep.route("/campaign/12/info/34/update/13");
+console.log(deep.route());
+console.log("\n\n\n");
+
+deep.route("/campaign/67/info/8998/update/56");
+console.log(deep.route());
+//console.profileEnd("t");
+console.log("\n\n\n");
+
+exampleMap.campaign.subs.info.route("/campaign/22222/info/14");
+console.log(deep.route());
+console.log("\n\n\n");
+
+exampleMap.campaign.subs.info.route("../info/56/update/27");
+console.log(deep.route());
+console.log("\n\n\n");
+
+exampleMap.campaign.subs.info.route("./info/444447");
+console.log(deep.route());
+console.log("\n\n\n");
+
+exampleMap.campaign.subs.info.route("../update/27");
+console.log(deep.route());
+console.log("\n\n\n");
+
+console.log("getRoute : ", exampleMap.campaign.subs.info.getRoute("./info/7585858585"));
+console.log("getRoute : ", exampleMap.campaign.subs.info.getRoute("/campaign/15555/update/89"));
+console.log("getRoute : ", exampleMap.campaign.subs.info.getRoute("../info/7585858585"));
+
+deep.route();
+
+//deep.route("/login");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var exampleMap = {
+    topbar:{
+        route:"!/[login,register]"
+    },
+    footer:{
+        route:"/!register"
+    },
+    campaign:deep.View({
         route:"/campaign/s:id",
         how:"hello world { id }",
         subs:{
@@ -33,41 +129,38 @@ var exampleMap = {
     }
 };
 
-deep.router.createRootMapper(exampleMap);
 
-//console.profile("t");
-deep.route("/campaign/12/info/34/update/13");
-console.log(deep.route())
+
+var mapper = deep.router2.createMap(exampleMap);
+
+var r = mapper.match("/campaign/12/info/34")
+
+console.log("r : ", r);
+console.log("mapper : ", mapper);
+mapper.print();
 console.log("\n\n\n");
+console.profile("r")
+mapper.route("/campaign/12455/info/34223322")
+console.profileEnd("r")
+mapper.getRoute();
+mapper.print();
 
-deep.route("/campaign/67/info/8998/update/56");
-console.log(deep.route())
-//console.profileEnd("t");
-console.log("\n\n\n");
 
-exampleMap.campaign.subs.info.route("/campaign/22222/info/14");
-console.log(deep.route())
-console.log("\n\n\n");
 
-exampleMap.campaign.subs.info.route("../info/56/update/27");
-console.log(deep.route())
-console.log("\n\n\n");
 
-exampleMap.campaign.subs.info.route("./info/444447");
-console.log(deep.route())
-console.log("\n\n\n");
 
-exampleMap.campaign.subs.info.route("../update/27");
-console.log(deep.route())
-console.log("\n\n\n");
 
-console.log("getRoute : ", exampleMap.campaign.subs.info.getRoute("./info/7585858585"));
-console.log("getRoute : ", exampleMap.campaign.subs.info.getRoute("/campaign/15555/update/89"));
-console.log("getRoute : ", exampleMap.campaign.subs.info.getRoute("../info/7585858585"));
 
-deep.route()
 
-//deep.route("/login");
+
+
+
+
+
+
+
+
+
 
 /*
 

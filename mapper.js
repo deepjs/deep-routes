@@ -1,266 +1,213 @@
-/**
- * @author Gilles Coomans <gilles.coomans@gmail.com>
- */
 "use strict";
 if (typeof define !== 'function') {
     var define = require('amdefine')(module);
 }
 define(["require", "deepjs/deep", "./route"], function(require, deep)
 {
-    deep.router = deep.router || {};
-    deep.route = function(route){
-        console.warn("no root route mapper defined yet. please use deep.router.createRootMapper(map) to iniate one.");
+    var closure = {};
+    deep.printRouteMap = function(){
+        if(!closure.node)
+            return null;
+        closure.node.print();
+    };
+    deep.route = function(route, strict)
+    {
+        if(!route)
+        {
+            if(!closure.node || !closure.node.childs)
+                return null;
+            return closure.node.getRoute();
+        }
+        else if(route._deep_route_node_)
+        {
+            closure.node = route;
+            return route;
+        }
+        else if(typeof route === 'object')
+            return deep.createRouteMap(route, strict)
+            .done(function(node){
+                closure.node = node;
+            })
+            .logError();
+        else
+        {
+            if(!closure.node)
+                throw deep.errors.Error(500,"you need to define a root Route map before using deep.route.");
+            return closure.node.route(route);
+        }
     };
 
-    deep.router.createRootMapper = function(map, strict)
-    {
-        var closure = {};
+    deep.createRouteMap = function(map, strict){
         return deep.flatten(map)
         .done(function(map){
-            var mapper = new deep.router.Mapper(map, null, null, strict);
-            deep.route = function(route){
-                if(!route)
-                {
-                    //console.log("GET ROUTE FROM : ", closure.res);
-                    if(!closure.res || !closure.res.childs)
-                        return null;
-                    // recompose route and return it as string
-                    var routeOutput = [];
-                    var printRouteNode = function(m){
-                        if(m.catched)
-                            routeOutput = routeOutput.concat(m.catched);
-                        if(m.childs)
-                            m.childs.forEach(printRouteNode);
-                    };
-                    closure.res.childs.forEach(printRouteNode);
-                    var output = "/"+routeOutput.join("/");
-                    //console.log("deep.route() : output ", output);
-                    return output;
-                }
-                else if(route._deep_route_node_)
-                    closure.res = route;
-                else
-                {
-                    var res = mapper.match(route);
-                    res.mapper = mapper;
-                    //console.log("deep.route : matched res :  ", res.catched, res.path, res.output);
-                    if(!res || res.childs.length === 0)
-                        console.log("nothing match with route : ", route);
-                    else if(res)
-                    {
-                        //console.log("________________ deep.route gives : ", res);
-                        closure.res = res;
-                        return doRoute(res.childs);
-                    }
-                    return null;
-                }
-            };
-            return mapper;
+            return deep.compileRouteMap(map, strict);
         });
     };
 
-    deep.router.Mapper = function(map, root, parent, strict){
-        this._deep_mapper_ = true;
-        this.root = root || null;
-        this.tests = [];
-        this.parent = parent;
-        this.strict = strict;
-        var mapper = this;
-        if(map)
-            var nodes = deep.query(map, "./*", { resultType:"full" })
-            .forEach(function(node){
-                var entry = node.value,
-                    entryName = node.key,
-                    router = null;
-                if (entry.route)
-                    router = new deep.Route(entry.route);
-                var mapNode = {
-                    name: entryName,
-                    router: router,
-                    childs: null,
-                    controllerNode: node,
-                    mapper:null
-                };
-                if(!deep.isNode)
+    deep.compileRouteMap = function(map, strict, root, parentNode){
+        if(!map)
+            return null;
+
+        if(!parentNode)
+        {
+            parentNode = root = new deep.RouteNode(); //parent, router, entryNode, root
+            parentNode.strict = strict;
+            parentNode.path = "/";
+        }
+
+        var nodes = deep.query(map, "./*", { resultType:"full" })
+        .forEach(function(node){
+            var entry = node.value,
+                router = null;
+            if (entry.route)
+                router = new deep.Route(entry.route);
+            var routeNode = new deep.RouteNode(parentNode, router, node, root);        //parent, router, entryNode, root
+            routeNode.path = node.path;
+            parentNode.childs.push(routeNode);
+            if(!deep.isNode)
+            {
+                var closure = {};
+                entry.route = function(route)
                 {
-                    var ownMapper = new deep.router.Mapper(null, mapper.root || mapper, mapper);
-                    mapNode.mapper = ownMapper;
-                    ownMapper.name = node.path+"(own)";
-                    ownMapper.tests = [mapNode];
-                    var closure = {};
-                    entry.route = function(route)
+                    if(!route)
+                        return closure.node;
+                    if(route._deep_route_node_)
                     {
-                        if(!route)
-                            return closure.node;
-                        if(route._deep_route_node_)
-                        {
-                            //console.log("swap node : ", closure.node, route);
-                            closure.node = route;
-                            return;
-                        }
-                        if(!closure.node)
-                            throw deep.errors.Error(500, "you try to  reroute from a controller that wasn't on screen");
-                        //console.log("________________entry.route will launch doRoute")
-                        return closure.node.route(route);
-                    };
-                    entry.getRoute = function(route)
-                    {
-                        if(!closure.node)
-                            throw deep.errors.Error(500, "you try to  getRoute from a controller that wasn't on screen")
-                        //console.log("________________entry.route will launch doRoute")
-                        return closure.node.getRoute(route);
-                    };
-                }
-                mapNode.childs = new deep.router.Mapper(deep.query(node, "./subs", {resultType:"full"}), mapper.root || mapper, mapper);
-                mapNode.childs.name = node.path;
-                mapper.tests.push(mapNode);
-            });
+                        //console.log("swap node : ", closure.node, route);
+                        closure.node = route;
+                        return;
+                    }
+                    if(!closure.node)
+                        throw deep.errors.Error(500, "you try to  reroute from a controller that wasn't on screen");
+                    //console.log("________________entry.route will launch doRoute")
+                    return closure.node.route(route);
+                };
+                entry.getRoute = function(route)
+                {
+                    if(!closure.node)
+                        throw deep.errors.Error(500, "you try to  getRoute from a controller that wasn't on screen");
+                    //console.log("________________entry.route will launch doRoute")
+                    return closure.node.getRoute(route);
+                };
+            }
+            var childs = deep.query(node, "./subs", {resultType:"full"});
+            deep.compileRouteMap(childs, strict, root, routeNode);
+        });
+        return parentNode;
     };
 
+    var loadNode = function(m)
+    {
+        var entry = m.controllerNode.value;
+        entry.params = m.output;
+        //console.log("will doRoute put m in entry : ", m);
+        if(!deep.isNode)
+            entry.route(m);
+        // console.log("load tree : ", m.controllerNode.path, " - ", entry.params);
+        if(m.childs)
+        {
+            m.subloads = [];
+            m.childs.forEach(function(c){
+                if(!c.output)
+                    return;
+                m.subloads.push(loadNode(c));
+            });
+        }
+        return deep(m.controllerNode)
+        .run("load", [m.output])
+        .done(function(res){
+            m.loaded = res;
+            return m;
+        })
+        .fail(function(e){
+            m.error = e;
+            console.error("error while loading controller : ", m.controllerNode.path, " : ", e);
+            return m;
+        });
+    };
 
-    function createRouteNode(parent, rest, mapper, entryNode, root){
-        return  {
-                _deep_route_node_:true,
-                parent:parent || null,
-                index:null,
-                controllerNode:entryNode || null,
-                childs:[],
-                output:null,
-                catched:null,
-                root:root || null,
-                mapper:mapper || null,
-                getRoute:function(route, fromChilds){
-                    //console.log("route.node : getRoute : ", JSON.stringify(route), this, fromChilds);
-                    var splitted = route;
-                    if(!route.forEach)
-                        splitted = route.split("/");
-                    var cur = splitted.shift();
-                    switch(cur)
-                    {
-                        case "." :          // local
-                            //console.log("local case : ", JSON.stringify(splitted), this);
-                            if(fromChilds)
-                                this.reroute = this.catched.concat(splitted);
-                            else
-                                this.reroute = splitted;
-                        // recompose route and return it as string
-                        var routeOutput = [];
-                        var printRouteNode = function(m){
-                            if(m.reroute)
-                            {
-                                routeOutput = routeOutput.concat(m.reroute);
-                                delete m.reroute;
-                                return;
-                            }
-                            if(m.catched)
-                                routeOutput = routeOutput.concat(m.catched);
-                            if(m.childs)
-                                m.childs.forEach(printRouteNode);
-                        };
-                        if(this.root)
-                            this.root.childs.forEach(printRouteNode);
-                        else
-                            this.childs.forEach(printRouteNode);
-                        var output = "/"+routeOutput.join("/");
-                        //console.log("deep.route() : output ", output);
-                        return output;
-
-                        case ".." :         // parent
-                            var par = this;
-                            while(cur == ".." && par)
-                            {
-                                par = par.parent;
-                                if(splitted[0] == "..")
-                                    cur = splitted.shift();
-                                else
-                                    cur = null;
-                            }
-                            if(par)
-                            {
-                                splitted = ["."].concat(splitted);
-                                //console.log("parent recursion case : ", JSON.stringify(splitted), this)
-                                if(par.root)
-                                    return par.getRoute(splitted, true);
-                                else
-                                    return par.getRoute(splitted);
-                            }
-                            return null;
-                        case "" :           // root
-                            //console.log("root case : ", JSON.stringify(splitted), this)
-                            return route;
-                        default : throw deep.errors.Error(500, "bad route from _deep_route_node_ : "+cur+"/"+splitted.join("/"));
-                    }
-                },
-                route:function(route, fromChilds){
-                    //console.log("route.node : route : ", route, fromChilds, this);
-                    var splitted = route;
-                    if(!route.forEach)
-                        splitted = route.split("/");
-                    var cur = splitted.shift();
-                    switch(cur)
-                    {
-                        case "." :          // local
-                            //console.log("try route local : from : ",this, fromChilds)
-                            var r = this.mapper.match(splitted, null, null, null, null, fromChilds),  // rest, output, basePath, parentNode, root, fromChilds
-                                node = r.childs[0];
-                            if(!node)
-                                return null;
-                            if(fromChilds)
-                            {
-                                node.output = this.output;
-                                node.catched = this.catched;
-                            }
-                            node.parent = this.parent;
-                            if(this.parent)
-                            {   
-                                node.index = this.index;
-                                this.parent.childs[this.index] = node;
-                            }
-                            else
-                                deep.route(r);
- 
-                            if(fromChilds)
-                                return doRoute([node]);
-                            else
-                                return doRoute(r.childs);
-                        case ".." :         // parent
-                            var par = this;
-                            while(cur == ".." && par)
-                            {
-                                par = par.parent;
-                                if(splitted[0] == "..")
-                                    cur = splitted.shift();
-                                else
-                                    cur = null;
-                            }
-                            if(par)
-                            {
-                                splitted.unshift(".");
-                                if(par.root)
-                                    return par.route(splitted, true);
-                                else
-                                    return par.route(splitted);
-                            }
-                            return null;
-                        case "" :           // root
-                            //console.log("root case : ", route, this)
-                            splitted.unshift(".");
-                            if(this.root)
-                                return this.root.route(splitted);
-                            else
-                                return this.route(splitted);
-
-                        default : throw deep.errors.Error(500, "bad route from _deep_route_node_ : "+cur+"/"+splitted.join("/"));
-                    }
-                }
-            };
-
+    var refreshAll = function doRouteRefreshAll(currents){
+        var allRender = [];
+        currents.forEach(function(m){
+            var p = deep.when(m)
+            .done(function(m){
+                if(m.error)
+                    return m.error;
+                var controllerNode = m.controllerNode;
+                var entry = controllerNode.value;
+                var refreshed = null;
+                if(entry.refresh)
+                    refreshed = entry.refresh(entry.params, m.loaded);
+                else
+                    refreshed = "(nothing)";
+                if(refreshed && (refreshed.then || refreshed.promise))
+                   return deep.when(refreshed)
+                   .done(function(refreshed){
+                        console.log("result : ", controllerNode.path, " - ", refreshed.rendered || refreshed, " - with : ",entry.params);
+                        m.renderOutput = refreshed;
+                        if(m.subloads)
+                            return refreshAll(m.subloads);
+                   })
+                   .fail(function(e){
+                        console.error("error while rendering controller : ", e, m);
+                   });
+                console.log("direct result : ", controllerNode.path, " - ", refreshed.rendered || refreshed, " - with : ",entry.params);
+                m.renderOutput = refreshed;
+                if(m.subloads)
+                    return refreshAll(m.subloads);
+            })
+            .fail(function(e){
+                console.error("error while loading controller : ", e, m);
+            });
+            allRender.push(p);
+        });
+        return allRender;
     }
 
-    deep.router.Mapper.prototype = {
-        match : function (rest, output, basePath, parentNode, root, fromChilds)
+    deep.RouteNode = function (parent, router, entryNode, root)
+    {
+        this.root = root || null;
+        this.parent = parent || null;
+        this.controllerNode = entryNode || null;
+        this.router = router || null;
+        this._deep_route_node_ = true;
+        this.childs = [];
+        this.output = null;
+        this.catched = null;
+        this.catchedIndices = null;
+    };
+
+    deep.RouteNode.prototype =   {
+        print:function(){
+            if(!this.output)
+                return;
+            console.log("node : ",this.path, JSON.stringify(this.output));
+            if(this.childs && this.childs.length > 0)
+                this.childs.forEach(function(c){
+                    if(c.output)
+                        c.print();
+                });
+        },
+        refresh:function(){
+            var allRender = null;
+            if(!this.root)
+            {
+                var promises = [];
+                this.childs.forEach(function(c){
+                    if(!c.output)
+                        return;
+                    promises.push(loadNode(c));
+                });
+                allRender = refreshAll(promises);
+            }
+            else
+                allRender = refreshAll([loadNode(this)]);
+            if(allRender && allRender.length > 0)
+                return deep.all(allRender);
+            return deep.when(null);
+        },
+        match: function (rest, index, parentOutput)
         {
-            //console.log("deep.router.Mapper.match : rest : ", rest);
             if (!rest.forEach)
             {
                 rest = rest.split("/");
@@ -268,162 +215,186 @@ define(["require", "deepjs/deep", "./route"], function(require, deep)
                     rest.shift();
                 if(rest[rest.length-1] === '')          // MODE STRICT = false
                     rest.pop();
+                index = 0;
             }
-            if(!basePath)
+            //console.log("node match : ", index, this);
+            if(!this.router)
+                this.output = {};
+            else
             {
-                basePath = rest.slice();
-                basePath._root = true;
-            }
-            var originalPath = rest.slice(), current = null;
-            output = output || {};
-            var res = createRouteNode(null, null, null, null, null); //parent, rest, mapper, entryNode, root
-            res.rest = rest;
-            //console.log("_____________ mapper.match : ", rest)
-            for (var i = 0; i < this.tests.length; ++i)
-            {
-                var handler = this.tests[i],
-                    routeNode = createRouteNode(parentNode || res, null, handler.mapper, handler.controllerNode, root || res);//parent, rest, mapper, entryNode, root
-                current = rest.slice();
-                //console.log("___ try entry : ", handler.name, handler.controllerNode.path, rest );
-                if (!fromChilds && handler.router)
+                var res = this.router.match(rest, index, {});
+                if(!res)
                 {
-                    // console.log("____________________________________________________ try router : ", handler.router.original );
-                    var cpath = rest;
-                    if(!handler.router.local)
-                    {
-                        // console.log("non local router : ",rest, basePath);
-                        cpath = basePath.slice();
-                        cpath._root = true;
-                    }
-                    var temp = handler.router.match(cpath);
-                    if (temp)
-                    {
-                        routeNode.catched = temp.catched;
-                        rest = res.rest = temp.rest;
-                        routeNode.output = temp.output;
-                        // console.log("***** res mapper match router : ", temp);
-                        if(handler.router.inverse)
-                        {
-                            //console.log("route was inversed")
-                            rest = current;
-                            continue;
-                        }
-                    }
-                    else if(!handler.router.optional && !handler.router.inverse)
-                    {
-                        // console.log("error and !optional && !inverse")
-                        continue;
-                    }
-                }
-                //console.log("add : ",routeNode);
-                if(handler.childs)
-                {
-                    //console.log("____ try childs");
-                    var r = handler.childs.match(rest, null, basePath, routeNode, root||res); // rest, output, basePath, parentNode, root
-                    if(r)
-                    {
-                        routeNode.childs = r.childs;
-                        rest = res.rest = r.rest;
-                    }
-                    //console.log("____ end childs matched : ", r);
-                }
-                if(!fromChilds || (routeNode.childs && routeNode.childs.length !== 0))
-                {
-                    routeNode.index = res.childs.length;
-                    res.childs.push(routeNode);
-                }
-            }
-            //console.log("_____________ end mapper.match", this.root, res.childs, res.rest);
-            
-            if(this.strict && !this.root && res.rest.length > 0)
-                res.childs = [];
-            //else
-            if(res.childs.length === 0)
-                res.rest = originalPath;
-            // console.log("_____________ end mapper.match");
-            return res;
-        }
-    };
-
-    //_________________________________________________________ APPLY ROUTE : load parallely all matched entries, refresh them inorder from root to leaf.
-    var doRoute = function(matched){
-        //return null;
-        //console.log("doRoute : matched : ", matched);
-        if(!matched.forEach)
-            matched = [matched];
-        var loadTree =  function doRouteLoadTree(matched, parentParams){
-            var loading = [];
-            matched.forEach(function(m){
-                //console.log("doRoute : loadtree on : ", m)
-                if(!m.output)
-                    m.output = {};
-                var entry = m.controllerNode.value;
-                m.output.parent = parentParams || {};
-                entry.params = m.output;
-                //console.log("will doRoute put m in entry : ", m);
-                if(!deep.isNode)
-                    entry.route(m);
-                // console.log("load tree : ", m.controllerNode.path, " - ", entry.params);
-                if(m.childs)
-                    m.subloads = loadTree(m.childs, m.output);
-                var p = deep(m.controllerNode)
-                .run("load", [m.output])
-                .done(function(res){
-                    m.loaded = res;
-                    return m;
-                })
-                .fail(function(e){
-                    m.error = e;
-                    console.error("error while loading controller : ", m.controllerNode.path, " : ", e);
-                    return m;
-                });
-                loading.push(p);
-            });
-            return loading;
-        };
-        var roots = loadTree(matched);
-        var allRender = [];
-        var refreshAll = function doRouteRefreshAll(currents){
-            currents.forEach(function(m){
-                var p = deep.when(m)
-                .done(function(m){
-                    if(m.error)
-                        return m.error;
-                    var controllerNode = m.controllerNode;
-                    var entry = controllerNode.value;
-                    var refreshed = null;
-                    if(entry.refresh)
-                        refreshed = entry.refresh(entry.params, m.loaded);
+                    if(this.router.optional || this.router.inverse)
+                        this.output = {};
                     else
-                        refreshed = "(nothing)";
-                    if(refreshed && (refreshed.then || refreshed.promise))
-                       return deep.when(refreshed)
-                       .done(function(refreshed){
-                            console.log("result : ", controllerNode.path, " - ", refreshed.rendered || refreshed, " - with : ",entry.params);
-                            m.renderOutput = refreshed;
-                            if(m.subloads)
-                                return refreshAll(m.subloads);
-                       })
-                       .fail(function(e){
-                            console.error("error while rendering controller : ", e, m);
-                       });
-                    console.log("direct result : ", controllerNode.path, " - ", refreshed.rendered || refreshed, " - with : ",entry.params);
-                    m.renderOutput = refreshed;
-                    if(m.subloads)
-                        return refreshAll(m.subloads);
-                })
-                .fail(function(e){
-                    console.error("error while loading controller : ", e, m);
-                });
-                allRender.push(p);
-            });
-        };
-        //return roots;
-        if(roots)
-            refreshAll(roots);
-        if(allRender.length > 0)
-            return deep.all(allRender);
-        return deep.when(null);
+                    {
+                        this.output = null;
+                        return { rest:rest, index:index };
+                    }
+                }
+                else if(this.router.inverse)
+                {
+                    this.output = null;
+                    return { rest:rest, index:index };
+                }
+                //console.log("catch output : ", res.output)
+                this.output = res.output || {};
+                this.catched = res.catched;
+                index = res.index;
+            }
+            if(parentOutput)
+                this.output.parent = parentOutput;
+            if(this.childs && this.childs.length > 0)
+                for(var i  = 0; i < this.childs.length; ++i)
+                {
+                    var r = this.childs[i].match(rest, index, this.output);
+                    if(r)
+                        index = r.index;
+                }
+            return {rest:rest, index:index};
+        },
+        getRoute:function(route, fromChilds){
+            // console.log("route.node : getRoute : ", JSON.stringify(route), this, fromChilds);
+            if(!route)
+            {
+                if(this.root)
+                    return this.root.getRoute();
+                var output = [];
+                var printRouteNode = function(m){
+                    if(!m.output)
+                        return;
+                    if(m.catched)
+                        output = output.concat(m.catched);
+                    if(m.childs)
+                        m.childs.forEach(printRouteNode);
+                };
+                this.childs.forEach(printRouteNode);
+                return "/"+output.join("/");
+            }
+            var splitted = route;
+            if(!route.forEach)
+                splitted = route.split("/");
+            var cur = splitted.shift();
+            switch(cur)
+            {
+                case "." :          // local
+                    //console.log("local case : ", JSON.stringify(splitted), this);
+                    if(fromChilds)
+                        this.reroute = this.catched.concat(splitted);
+                    else
+                        this.reroute = splitted;
+                    // recompose route and return it as string
+                    var routeOutput = [];
+                    var printRouteNode2 = function(m){
+                        if(!m.output)
+                            return;
+                        if(m.reroute)
+                        {
+                            routeOutput = routeOutput.concat(m.reroute);
+                            delete m.reroute;
+                            return;
+                        }
+                        if(m.catched)
+                            routeOutput = routeOutput.concat(m.catched);
+                        if(m.childs)
+                            m.childs.forEach(printRouteNode2);
+                    };
+                    if(this.root)
+                        this.root.childs.forEach(printRouteNode2);
+                    else
+                        this.childs.forEach(printRouteNode2);
+                    return "/"+routeOutput.join("/");
+
+                case ".." :         // parent
+                    var par = this;
+                    while(cur == ".." && par)
+                    {
+                        par = par.parent;
+                        if(splitted[0] == "..")
+                            cur = splitted.shift();
+                        else
+                            cur = null;
+                    }
+                    if(par)
+                    {
+                        splitted = ["."].concat(splitted);
+                        //console.log("parent recursion case : ", JSON.stringify(splitted), this)
+                        if(par.root)
+                            return par.getRoute(splitted, true);
+                        else
+                            return par.getRoute(splitted);
+                    }
+                    return null;
+                case "" :           // root
+                    //console.log("root case : ", JSON.stringify(splitted), this)
+                    return route;
+                default : throw deep.errors.Error(500, "bad route from _deep_route_node_ : "+cur+"/"+splitted.join("/"));
+            }
+        },
+        route:function(route, fromChilds){
+            //console.log("route.node : route : ", route, fromChilds, this);
+            var self = this;
+            if(!route.forEach)
+                route = route.split("/");
+            var cur = route.shift();
+            switch(cur)
+            {
+                case "." :          // local
+                    //console.log("try route local : from : ",this, fromChilds)
+                    var index = 0;
+                    if(!fromChilds)
+                        this.match(route);
+                    else if(this.childs)
+                            this.childs.forEach(function(c){
+                                var r = c.match(route, index, self.output);
+                                if(r)
+                                    index = r.index;
+                            });
+                    if(this.output)
+                        if(fromChilds)
+                        {
+                            var promises = [];
+                            if(this.childs)
+                                this.childs.forEach(function(c){
+                                    if(c.output)
+                                        promises.push(c.refresh());
+                                });
+                        }
+                        else
+                            return this.refresh();
+                    return null;
+                case ".." :         // parent
+                    var par = this;
+                    while(cur == ".." && par)
+                    {
+                        par = par.parent;
+                        if(route[0] == "..")
+                            cur = route.shift();
+                        else
+                            cur = null;
+                    }
+                    if(par)
+                    {
+                        route.unshift(".");
+                        if(par.root)
+                            return par.route(route, true);
+                        else
+                            return par.route(route);
+                    }
+                    return null;
+                case "" :           // root
+                    //console.log("root case : ", route, this)
+                    route.unshift(".");
+                    if(this.root)
+                        return this.root.route(route);
+                    else
+                        return this.route(route);
+                    break;
+
+                default : throw deep.errors.Error(500, "bad route from _deep_route_node_ : "+cur+"/"+route.join("/"));
+            }
+        }
     };
 });
 
