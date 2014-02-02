@@ -278,6 +278,28 @@ define(["require", "deepjs/deep", "./route"], function(require, deep)
             var cur = splitted.shift();
             switch(cur)
             {
+                case ">" : 
+                    this.reroute = this.catched.concat(splitted);
+                    var routeOutput = [];
+                    var printRouteNode2 = function(m){
+                        if(!m.output)
+                            return;
+                        if(m.reroute)
+                        {
+                            routeOutput = routeOutput.concat(m.reroute);
+                            delete m.reroute;
+                            return;
+                        }
+                        if(m.catched)
+                            routeOutput = routeOutput.concat(m.catched);
+                        if(m.childs)
+                            m.childs.forEach(printRouteNode2);
+                    };
+                    if(this.root)
+                        this.root.childs.forEach(printRouteNode2);
+                    else
+                        this.childs.forEach(printRouteNode2);
+                    return "/"+routeOutput.join("/");
                 case "." :          // local
                     //console.log("local case : ", JSON.stringify(splitted), this);
                     if(fromChilds)
@@ -340,6 +362,20 @@ define(["require", "deepjs/deep", "./route"], function(require, deep)
             var cur = route.shift();
             switch(cur)
             {
+                case ">" :    // childs only
+                        if(!this.childs)
+                            return null;
+                        this.childs.forEach(function(c){
+                            var r = c.match(route, index, self.output);
+                            if(r)
+                                index = r.index;
+                        });
+                        var promises = [];
+                        this.childs.forEach(function(c){
+                            if(c.output)
+                                promises.push(c.refresh());
+                        });
+                        return deep.all(promises);
                 case "." :          // local
                     //console.log("try route local : from : ",this, fromChilds)
                     var index = 0;
@@ -360,6 +396,7 @@ define(["require", "deepjs/deep", "./route"], function(require, deep)
                                     if(c.output)
                                         promises.push(c.refresh());
                                 });
+                            return deep.all(promises);
                         }
                         else
                             return this.refresh();
