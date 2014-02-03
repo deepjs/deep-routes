@@ -79,6 +79,7 @@ define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-no
     {
         emitter.on(type, callback);
     };
+    
     deep.route.remove = function(type, callback)
     {
         emitter.remove(type, callback);
