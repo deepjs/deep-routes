@@ -1,44 +1,95 @@
-var exampleMap = {
-    topbar:{
-        route:"!/[login,register]"
-    },
-    footer:{
-        route:"/!register"
-    },
-    noCamp:{
-        route:"/!campaign"
-    },
-    campaign:deep.View({
-        route:"/campaign/s:id",
-        how:"hello world { id }",
-        subs:{
-          info:deep.View({
-            route:"?./info/s:id",
-            how:"hello info : { id | 'default' }"
-          }),
-          update:{
-            route:"./update/s:id",
-            subs:{
-              profile:{
-              }
+/**
+ * @author Philippe Delabye <phil@chemicalrules.net>
+ * @contributors Gilles Coomans <gilles.coomans@gmail.com>
+THIS IS THE VIEW MAIN APP : so for browser side.
+ */
+require.config({
+    baseUrl: "./libs",
+    catchError:true
+});
+require([
+    "require",
+    "deep-browser/index",
+],
+function(require, deep){
+
+    //require("deep-browser/index");
+    deep.generalModes("roles","public");
+
+    var exampleMap = {
+        topbar:deep.View({
+            route:"!/[login,register]",
+            how:"swig::/test.swig",
+            where:"dom.htmlOf::#topbar"
+        }),
+        footer:deep.ocm({
+            user:deep.View({
+                route:"!/register",
+                how:"<span>ocm powaaaaaaa user</span>",
+                where:deep.jquery.htmlOf("#footer")
+            }),
+            "public":{
+                backgrounds:["this::../user"],
+                how:"<span>ocm powaaaaaaa public</span>"
             }
-          },
-          test:{
-            route:"/campaign/s:id"
-          }
-        }
-      }),
-    always:{
-    },
-    campaigns:{
-        route:"/campaigns/?q:query/?(/i:start/i:end)",
-        subs:{
-          info:{
-            route:"?./info/s:id"
-          }
-        }
-    }
-};
+        }, { group:"roles" }),
+        campaign:deep.View({
+            route:"/campaign/s:id",
+            how:"<div>hello campaign { id }<div id='info'></div><div id='update'></div></div>",
+            where:"dom.htmlOf::#content",
+            subs:{
+                info:deep.View({
+                    route:"?./info/s:id",
+                    how:"swig::/info.swig",
+                    where:"dom.htmlOf::#info"
+                }),
+                update:deep.View({
+                    route:"./update/s:id",
+                    how:"<div>update hello { id }<div id='profile'></div></div>",
+                    where:"dom.htmlOf::#update",
+                    subs:{
+                        profile:deep.View({
+                            how:"<div>profile from update { parent.id }</div>",
+                            where:"dom.htmlOf::#profile"
+                        })
+                    }
+                })
+            }
+        }),
+        register:deep.View({
+            route:"/register",
+            how:"<div>register</div>",
+            where:"dom.htmlOf::#content"
+        }),
+        campaigns:deep.View({
+            route:"/campaigns/?q:query/?(i:start/i:end)",
+            how:"<div>campaigns { query | 'no query' } - { start | '0' }:{ end | '10'}<div id='info'></div></div>",
+            where:"dom.htmlOf::#content",
+            subs:{
+              info:deep.View({
+                route:"?./info/s:id",
+                how:"swig::/info.swig",
+                where:"dom.htmlOf::#info"
+              })
+            }
+        })
+    };
+    
+    $('<a href="/campaigns/?bloup/16/32/info/899898">campaigns</a><br/>').appendTo("#menu");
+    $('<a href="/campaign/12345667/info/899898">camp + info</a><br/>').appendTo("#menu");
+    $('<a href="/campaign/12345667/update/78">camp + update</a><br/>').appendTo("#menu");
+    $('<a href="/campaign/33333/info/546/update/8975">camp + info + update </a><br/>').appendTo("#menu");
+    $('<a href="/register">register</a><br/>').appendTo("#menu");
+    deep.ui.relink("body");
+    deep.route(exampleMap)
+    .done(function(s){
+        console.log("map compiled: ", s);
+        return s.init();
+    })
+    console.log("app initialised");
+
+
+});
 
 
 deep.route(exampleMap);
