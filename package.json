@@ -18,7 +18,7 @@
     "url": "https://github.com/deepjs/deep-routes.git"
   },
   "dependencies": {
-    "deepjs": ">=0.9.6"
+    "deepjs": ">=0.10.7"
   },
   "engine":{
   	"node":">=0.10.0"
