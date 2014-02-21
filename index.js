@@ -51,16 +51,17 @@ define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-no
     var closure = {};
     var emitter = new deep.Emitter();
 
+/*
     deep.printRouteMap = function(){
         if(!closure.node)
             return null;
         closure.node.print();
-    };
+    };*/
 
     deep.getRoute = function(){
         if(!closure.node)
             return null;
-        return closure.node.getRoute();
+        //return closure.node.getRoute();
     };
 
     deep.routeMap = function(){
@@ -69,7 +70,7 @@ define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-no
         return closure.map;
     };
 
-    var oldRoute = null;
+    //var oldRoute = null;
 
     deep.route = function(route, strict)
     {
@@ -95,10 +96,9 @@ define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-no
                 closure.map = route;
                 closure.node = node;
                 node.emitter = emitter;
-                node.init = function(){
-                    var uri = window.location.hash.substring(1) || "/";
-                    console.log("route init : ", uri);
-                    this.route(uri);
+                node.init = function(uri){
+                    uri = uri || window.location.hash.substring(1) || "/";
+                    console.log("route init : ", uri, this.route(uri));
                 };
             })
             .logError();
@@ -106,9 +106,9 @@ define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-no
         {
             if(!closure.node)
                 throw deep.errors.Error(500,"you need to define a root Route map before using deep.route.");
-            if(oldRoute == route)
-                 return;
-            oldRoute = route;
+            //if(oldRoute == route)
+            //     return;
+            //oldRoute = route;
             //console.log("\ndeep.route : ",route,"\n\n")
             return deep.when(closure.node.route(route));
         }
