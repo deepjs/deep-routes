@@ -16,8 +16,8 @@ define(["require", "deepjs/deep"], function(require, deep, Unit) {
 					.equal({
 						catched: ["campaign", "12", "update", "?jekk"],
 						output: {
-							"id": "12",
-							"query": "?jekk"
+							id: "12",
+							query:"?jekk"
 						},
 						parts: ["campaign", "12", "update", "?jekk"],
 						index: 4,
