@@ -115,7 +115,7 @@ define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-no
             }
         };
 
-        deep.Chain.addHandle("route", function (route) {
+        deep.Chain.add("route", function (route) {
             var self = this;
             var func = function (s, e) {
                 return deep.route(route);
