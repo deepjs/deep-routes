@@ -14,7 +14,7 @@ require([
 function(require, deep){
 
     //require("deep-browser/index");
-    deep.generalModes("roles","public");
+    deep.Modes("roles","public");
 
     var exampleMap = {
         topbar:deep.View({
