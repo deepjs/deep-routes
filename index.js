@@ -99,7 +99,7 @@ define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-no
                     node.emitter = emitter;
                     node.init = function(uri){
                         uri = uri || window.location.hash.substring(1) || "/";
-                        console.log("route init : ", uri, this.route(uri));
+                        console.log("route init : ", uri, deep.route(uri));
                     };
                 })
                 .logError();
@@ -110,8 +110,8 @@ define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-no
                 //if(oldRoute == route)
                 //     return;
                 //oldRoute = route;
-                //console.log("\ndeep.route : ",route,"\n\n")
-                return deep.when(closure.node.route(route));
+                var match = closure.node.match(route);
+                return deep.when(deep.RouteNode.refresh(match, route))
             }
         };
 
