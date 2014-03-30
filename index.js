@@ -14,7 +14,7 @@
             --> maybe set redirection (route transformation) in mapper after compilation.
             they will be at higher priority
             ex : 
-            deep.route().redirection("/campaign/s:id", "/brol/{ id }")
+            deep.route.redirection("/campaign/s:id", "/brol/{ id }")
 
     - staters ? will see when it's needed.
 
@@ -34,7 +34,7 @@
 if (typeof define !== 'function') {
     var define = require('amdefine')(module);
 }
-define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-node", "deepjs/lib/view"], function(require, deep)
+define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-node"], function(require, deep)
 {
 	deep.errors.Route = function(msg, report, fileName, lineNum) {
         if (typeof msg === 'object')
@@ -47,115 +47,8 @@ define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-no
 	require("./lib/route-node");
     require("./lib/mapper");
 
-
-    //var oldRoute = null;
-    if(!deep.isNode)
-    {
-        var closure = {};
-        var emitter = new deep.Emitter();
-
-        /*
-        deep.printRouteMap = function(){
-            if(!closure.node)
-                return null;
-            closure.node.print();
-        };*/
-
-        deep.getRoute = function(){
-            if(!closure.node)
-                return null;
-            //return closure.node.getRoute();
-        };
-
-        deep.routeMap = function(){
-            if(!closure.map)
-                return null;
-            return closure.map;
-        };
-        
-        deep.route = function(route, strict)
-        {
-            // console.log("deep.route : ", route, closure.node);
-            if(!route)
-            {
-                if(!closure.node)
-                    return null;
-                return closure.node;
-            }
-            else if(route._deep_route_node_)
-            {
-                if(closure.node)
-                    closure.node.emitter = null;
-                closure.node = route;
-                if(!route.emitter)
-                    route.emitter = emitter;
-                return route;
-            }
-            else if(typeof route === 'object')
-                return deep.createRouteMap(route, strict)
-                .done(function(node){
-                    closure.map = route;
-                    closure.node = node;
-                    node.emitter = emitter;
-                    node.init = function(uri){
-                        uri = uri || window.location.hash.substring(1) || "/";
-                        console.log("route init : ", uri, deep.route(uri));
-                    };
-                })
-                .logError();
-            else
-            {
-                if(!closure.node)
-                    throw deep.errors.Error(500,"you need to define a root Route map before using deep.route.");
-                //if(oldRoute == route)
-                //     return;
-                //oldRoute = route;
-                var match = closure.node.match(route);
-                return deep.when(deep.RouteNode.refresh(match, route))
-            }
-        };
-
-        deep.Chain.add("route", function (route) {
-            var self = this;
-            var func = function (s, e) {
-                return deep.route(route);
-            };
-            func._isDone_ = true;
-            deep.utils.addInChain.call(self, func);
-            return this;
-        });
-
-        deep.route.on = function(type, callback)
-        {
-            emitter.on(type, callback);
-        };
-        
-        deep.route.remove = function(type, callback)
-        {
-            emitter.remove(type, callback);
-        };
-
-        deep.route.refresh = function(){
-            if(!closure.node)
-                throw deep.errors.Error(500,"you need to define a root Route map before using deep.route.refresh()");
-            return closure.node.refresh();
-        };
-
-        deep.ui.View.htmlEnhancers["dp-route"] = function(node){
-            var self = this;
-            $(node).click(function(e){
-                e.preventDefault();
-                var route = self.getRoute($(node).attr("dp-route"));
-                deep.route(route);
-            });
-        };
-    }
-
     deep.coreUnits = deep.coreUnits || [];
-    deep.coreUnits.push("js::deep-routes/units/route-dsl");
-    deep.coreUnits.push("js::deep-routes/units/map-dsl");
-
-    return deep;
+    deep.coreUnits.push("js::deep-routes/units/route-dsl", "js::deep-routes/units/map-dsl");
 });
 
 
