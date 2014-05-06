@@ -54,7 +54,7 @@ define(["require", "deepjs/deep", "./index", "./lib/relink"], function(require, 
                     console.log("route init : ", uri, deep.route(uri));
                 };
             })
-            .logError();
+            .elog();
         else
         {
             if(!closure.node)
