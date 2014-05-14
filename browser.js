@@ -6,7 +6,7 @@
 if(typeof define !== 'function')
 	var define = require('amdefine')(module);
 
-define(["require", "deepjs/deep", "./index"], function(require, deep, base, relinker){
+define(["require", "deepjs/deep", "./index"], function(require, deep, base){
   //var oldRoute = null;
     var closure = {};
     var emitter = new deep.Emitter();
@@ -51,9 +51,11 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base, reli
                 node.emitter = emitter;
                 node.init = function(uri){
                     uri = uri || window.location.hash.substring(1) || "/";
-                    console.log("route init : ", uri, deep.route(uri));
+                    console.log("route init : ", uri);
                     if(deep.route.deepLink && deep.route.deepLink.config &&  !deep.route.deepLink.config.useHash)
-                        history.replaceState({ url: window.location.href }, '');
+                        history.replaceState({ url: uri }, '');
+                    deep.route.relink("body");
+                    return deep.route(uri);
                 };
             })
             .elog();
@@ -70,7 +72,7 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base, reli
     };
 
     deep.route.relinkNode = function(){
-        $ = deep.context.$;
+        var $ = deep.context.$;
         if(this._deep_rerouted_)
             return;
         var tagName = $(this).get(0).tagName.toLowerCase(), uri = null;
@@ -82,8 +84,10 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base, reli
             return;
         if(uri[0] == '/' && uri[1] == '/')   // file
             return;
-        //console.log("RELINK : ", uri);
         this._deep_rerouted_ = true;
+        if(deep.route.deepLink.config && deep.route.deepLink.config.hashAsAnchor && (uri[0] == "#" || uri[1] == "#"))
+            return;
+        // console.log("RELINK : ", uri);
         $(this).click(function(e){
             e.preventDefault();
             //console.log("click on rerouted dom object : uri : ", uri);
@@ -91,8 +95,8 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base, reli
         });
     };
     deep.route.relink = function(selector){
-        $ = deep.context.$;
-        // console.log("relink : ", selector);
+        var $ = deep.context.$;
+         // console.log("relink : ", selector);
         $(selector)
         .find("a")
         .each(deep.route.relinkNode);
@@ -139,7 +143,18 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base, reli
 	deep.route.deepLink = function(config){
         config = deep.route.deepLink.config = config || {};
         if(typeof config.useHash === "undefined")
-            config.useHash = (!window.history.pushState)?true:false;
+        {
+            if(!window.history.pushState)
+            {
+                config.useHash = true;
+                config.hashAsAnchor = false;
+            }
+            else
+            {
+                config.useHash = false;
+                config.hashAsAnchor = true;
+            }
+        }
         deep.route.deepLink.useHash = true;
 		deep.route.on("refreshed", function(event){
 			// console.log("ROUTE refreshed : ", event.datas, oldURL);
@@ -148,16 +163,16 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base, reli
 			{
 				if(!refreshed.forEach)
 					refreshed = [refreshed];
-				refreshed.forEach(function(refreshed){
-					// console.log("RELINK : ",refreshed.refreshed);
-					if(refreshed.loaded && refreshed.loaded.placed)
-						deep.route.relink(refreshed.loaded.placed);
-				});
+				/*refreshed.forEach(function(refreshed){
+					//console.log("RELINK : ",refreshed);
+					//if(refreshed.loaded && refreshed.loaded.placed)
+					//	deep.route.relink(refreshed.loaded.placed);
+				});*/
 			}
 			else
 			{
 				// console.log("BODY RELINK");
-				deep.route.relink("body");
+				//deep.route.relink("body");
 			}
             // console.log("event.datas.route == oldURL ? ", event.datas.route == oldURL)
             // console.log("fromHistory ? ", event.datas)
