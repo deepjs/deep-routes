@@ -12,18 +12,6 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
     var emitter = new deep.Emitter();
 
     deep.isBrowser = true;
-
-    deep.getRoute = function(){
-        if(!closure.node)
-            return null;
-        //return closure.node.getRoute();
-    };
-
-    deep.routeMap = function(){
-        if(!closure.map)
-            return null;
-        return closure.map;
-    };
     
     deep.route = function(route, strict, fromHistory)
     {
@@ -102,6 +90,8 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
         .each(deep.route.relinkNode);
     };
 
+
+
     deep.Chain.add("route", function (route) {
         var self = this;
         var func = function (s, e) {
@@ -140,6 +130,9 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
     //_________________________________ DEEP LINK ____________________________________________
 
     var oldURL = "/";
+    deep.route.current = function(){
+        return oldURL;
+    };
 	deep.route.deepLink = function(config){
         config = deep.route.deepLink.config = config || {};
         if(typeof config.useHash === "undefined")
@@ -163,19 +156,7 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
 			{
 				if(!refreshed.forEach)
 					refreshed = [refreshed];
-				/*refreshed.forEach(function(refreshed){
-					//console.log("RELINK : ",refreshed);
-					//if(refreshed.loaded && refreshed.loaded.placed)
-					//	deep.route.relink(refreshed.loaded.placed);
-				});*/
 			}
-			else
-			{
-				// console.log("BODY RELINK");
-				//deep.route.relink("body");
-			}
-            // console.log("event.datas.route == oldURL ? ", event.datas.route == oldURL)
-            // console.log("fromHistory ? ", event.datas)
 			if(event.datas.route == oldURL)
 				return;
 			oldURL = event.datas.route;
@@ -207,6 +188,18 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
                 }
             };
 	};
+    /*window.onbeforeunload = function (evt) {
+      var message = 'Are you sure you want to leave?';
+      //window.location.href = "/#/"+deep.route.current();
+      return;
+      if (typeof evt == 'undefined') {
+        evt = window.event;
+      }
+      if (evt) {
+        evt.returnValue = message;
+      }
+      return message;
+    };*/
 
 	return deep.route;
 });
