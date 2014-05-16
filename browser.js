@@ -151,12 +151,6 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
         deep.route.deepLink.useHash = true;
 		deep.route.on("refreshed", function(event){
 			// console.log("ROUTE refreshed : ", event.datas, oldURL);
-			var refreshed = event.datas.refreshed;
-			if(refreshed)
-			{
-				if(!refreshed.forEach)
-					refreshed = [refreshed];
-			}
 			if(event.datas.route == oldURL)
 				return;
 			oldURL = event.datas.route;
