@@ -4,28 +4,16 @@
  */
  
 if(typeof define !== 'function')
-	var define = require('amdefine')(module);
+    var define = require('amdefine')(module);
 
-define(["require", "deepjs/deep", "./index", "./lib/relink"], function(require, deep, base, relinker){
+define(["require", "deepjs/deep", "./index"], function(require, deep, base){
   //var oldRoute = null;
     var closure = {};
     var emitter = new deep.Emitter();
 
     deep.isBrowser = true;
-
-    deep.getRoute = function(){
-        if(!closure.node)
-            return null;
-        //return closure.node.getRoute();
-    };
-
-    deep.routeMap = function(){
-        if(!closure.map)
-            return null;
-        return closure.map;
-    };
     
-    deep.route = function(route, strict)
+    deep.route = function(route, strict, fromHistory)
     {
         // console.log("deep.route : ", route, closure.node);
         if(!route)
@@ -51,7 +39,11 @@ define(["require", "deepjs/deep", "./index", "./lib/relink"], function(require, 
                 node.emitter = emitter;
                 node.init = function(uri){
                     uri = uri || window.location.hash.substring(1) || "/";
-                    console.log("route init : ", uri, deep.route(uri));
+                    console.log("route init : ", uri);
+                    if(deep.route.deepLink && deep.route.deepLink.config &&  !deep.route.deepLink.config.useHash)
+                        history.replaceState({ url: uri }, '');
+                    deep.route.relink("body");
+                    return deep.route(uri);
                 };
             })
             .elog();
@@ -63,12 +55,46 @@ define(["require", "deepjs/deep", "./index", "./lib/relink"], function(require, 
             //     return;
             //oldRoute = route;
             var match = closure.node.match(route);
-            return deep.when(deep.RouteNode.refresh(match, route))
+            return deep.when(deep.RouteNode.refresh(match, route, fromHistory))
         }
     };
 
-    for(var i in relinker)
-    	deep.route[i] = relinker[i];
+    deep.route.getMap = function(){
+        return closure.map;
+    }
+
+    deep.route.relinkNode = function(){
+        var $ = deep.context.$;
+        if(this._deep_rerouted_)
+            return;
+        var tagName = $(this).get(0).tagName.toLowerCase(), uri = null;
+        if(tagName == 'a')
+            uri = $(this).attr("href");
+        if(!uri)
+            return;
+        if(uri.substring(0,4) === 'http')
+            return;
+        if(uri[0] == '/' && uri[1] == '/')   // file
+            return;
+        this._deep_rerouted_ = true;
+        if(deep.route.deepLink.config && deep.route.deepLink.config.hashAsAnchor && (uri[0] == "#" || uri[1] == "#"))
+            return;
+        // console.log("RELINK : ", uri);
+        $(this).click(function(e){
+            e.preventDefault();
+            //console.log("click on rerouted dom object : uri : ", uri);
+            deep.route(uri);
+        });
+    };
+    deep.route.relink = function(selector){
+        var $ = deep.context.$;
+         // console.log("relink : ", selector);
+        $(selector)
+        .find("a")
+        .each(deep.route.relinkNode);
+    };
+
+
 
     deep.Chain.add("route", function (route) {
         var self = this;
@@ -85,7 +111,7 @@ define(["require", "deepjs/deep", "./index", "./lib/relink"], function(require, 
         emitter.on(type, callback);
     };
     
-    deep.route.remove = function(type, callback)
+    deep.route.unbind = function(type, callback)
     {
         emitter.remove(type, callback);
     };
@@ -108,44 +134,70 @@ define(["require", "deepjs/deep", "./index", "./lib/relink"], function(require, 
     //_________________________________ DEEP LINK ____________________________________________
 
     var oldURL = "/";
+    deep.route.current = function(){
+        return oldURL;
+    };
+    deep.route.deepLink = function(config){
+        config = deep.route.deepLink.config = config || {};
+        if(typeof config.useHash === "undefined")
+        {
+            if(!window.history.pushState)
+            {
+                config.useHash = true;
+                config.hashAsAnchor = false;
+            }
+            else
+            {
+                config.useHash = false;
+                config.hashAsAnchor = true;
+            }
+        }
+        deep.route.deepLink.useHash = true;
+        deep.route.on("refreshed", function(event){
+            // console.log("ROUTE refreshed : ", event.datas, oldURL);
+            if(event.datas.route == oldURL)
+                return;
+            oldURL = event.datas.route;
+            if(config.useHash)
+                window.location.hash = oldURL;
+            else if(!event.datas.fromHistory)
+                window.history.pushState({ url:oldURL },"", oldURL);
+        });
 
-	deep.route.deepLink = function(config){
-		deep.route.on("refreshed", function(event){
-			// console.log("ROUTE refreshed : ", event.datas, oldURL);
-			var refreshed = event.datas.refreshed;
-			if(refreshed)
-			{
-				if(!refreshed.forEach)
-					refreshed = [refreshed];
-				refreshed.forEach(function(refreshed){
-					// console.log("RELINK : ",refreshed.refreshed);
-					if(refreshed.loaded && refreshed.loaded.placed)
-						deep.route.relink(refreshed.loaded.placed);
-				});
-			}
-			else
-			{
-				// console.log("BODY RELINK");
-				deep.route.relink("body");
-			}
-			if(event.datas.route == oldURL)
-				return;
-			oldURL = event.datas.route;
-			window.location.hash = event.datas.route;
-		});
+        if(config.useHash)
+        {
+            function hashChange(event) {
+                var newHash = window.location.hash.substring(1) || "/";
+                //console.log("__________________________ hash change : ", newHash, oldURL);
+                if(newHash == oldURL)
+                    return;
+                deep.route(newHash || "/");
+            }
+            if (!window.addEventListener)
+                window.attachEvent("hashchange", hashChange);
+            else
+                window.addEventListener("hashchange", hashChange, false);
+        }
+        else
+            window.onpopstate = function(e){
+                // console.log("popstate : ", e.state);
+                if(e.state){
+                    deep.route(e.state.url, false, true);
+                }
+            };
+    };
+    /*window.onbeforeunload = function (evt) {
+      var message = 'Are you sure you want to leave?';
+      //window.location.href = "/#/"+deep.route.current();
+      return;
+      if (typeof evt == 'undefined') {
+        evt = window.event;
+      }
+      if (evt) {
+        evt.returnValue = message;
+      }
+      return message;
+    };*/
 
-		function hashChange(event) {
-			var newHash = window.location.hash.substring(1) || "/";
-			//console.log("__________________________ hash change : ", newHash, oldURL);
-			if(newHash == oldURL)
-				return;
-			deep.route(newHash || "/");
-		}
-		if (!window.addEventListener)
-		    window.attachEvent("hashchange", hashChange);
-		else
-		    window.addEventListener("hashchange", hashChange, false);
-	};
-
-	return deep.route;
+    return deep.route;
 });
