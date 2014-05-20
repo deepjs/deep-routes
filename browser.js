@@ -137,7 +137,7 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
     deep.route.current = function(){
         return oldURL;
     };
-    deep.route.deepLink = function(config){
+	deep.route.deepLink = function(config){
         config = deep.route.deepLink.config = config || {};
         if(typeof config.useHash === "undefined")
         {
@@ -153,30 +153,31 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
             }
         }
         deep.route.deepLink.useHash = true;
-        deep.route.on("refreshed", function(event){
-            // console.log("ROUTE refreshed : ", event.datas, oldURL);
-            if(event.datas.route == oldURL)
-                return;
-            oldURL = event.datas.route;
-            if(config.useHash)
+
+		deep.route.on("refreshed", function(event){
+			// console.log("ROUTE refreshed : ", event.datas, oldURL);
+			if(event.datas.route == oldURL)
+				return;
+			oldURL = event.datas.route;
+			if(config.useHash)
                 window.location.hash = oldURL;
             else if(!event.datas.fromHistory)
                 window.history.pushState({ url:oldURL },"", oldURL);
-        });
+		});
 
         if(config.useHash)
         {
-            function hashChange(event) {
-                var newHash = window.location.hash.substring(1) || "/";
-                //console.log("__________________________ hash change : ", newHash, oldURL);
-                if(newHash == oldURL)
-                    return;
-                deep.route(newHash || "/");
-            }
-            if (!window.addEventListener)
-                window.attachEvent("hashchange", hashChange);
-            else
-                window.addEventListener("hashchange", hashChange, false);
+    		function hashChange(event) {
+    			var newHash = window.location.hash.substring(1) || "/";
+    			//console.log("__________________________ hash change : ", newHash, oldURL);
+    			if(newHash == oldURL)
+    				return;
+    			deep.route(newHash || "/");
+    		}
+    		if (!window.addEventListener)
+    		    window.attachEvent("hashchange", hashChange);
+    		else
+    		    window.addEventListener("hashchange", hashChange, false);
         }
         else
             window.onpopstate = function(e){
@@ -185,7 +186,8 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
                     deep.route(e.state.url, false, true);
                 }
             };
-    };
+
+	};
     /*window.onbeforeunload = function (evt) {
       var message = 'Are you sure you want to leave?';
       //window.location.href = "/#/"+deep.route.current();
