@@ -88,7 +88,7 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
     };
     deep.route.relink = function(selector){
         var $ = deep.context.$;
-        console.log("relink : ", selector);
+        // console.log("relink : ", selector);
         $(selector)
         .find("a")
         .each(deep.route.relinkNode);
@@ -154,7 +154,7 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
         }
         deep.route.deepLink.useHash = true;
         deep.route.on("refreshed", function(event){
-            console.log("ROUTE refreshed : ", event.datas, oldURL);
+            // console.log("ROUTE refreshed : ", event.datas, oldURL);
             if(event.datas.refreshed)
                 deep.route.relink('body');
             if(event.datas.route == oldURL)
