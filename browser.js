@@ -39,8 +39,12 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
                 node.emitter = emitter;
                 node.init = function(uri){
                     uri = uri || window.location.hash.substring(1) || "/";
+                    if(uri !== '/' && uri[0] !== '!')
+                        return;
+                    if(uri[0] == '!')
+                        uri = uri.substring(1);
                     console.log("route init : ", uri);
-                    if(deep.route.deepLink && deep.route.deepLink.config &&  !deep.route.deepLink.config.useHash)
+                    if(history && deep.route.deepLink.config &&  !deep.route.deepLink.config.useHash)
                         history.replaceState({ url: uri }, '');
                     //deep.route.relink("body");
                     return deep.route(uri);
@@ -54,8 +58,16 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
             //if(oldRoute == route)
             //     return;
             //oldRoute = route;
+            //
+            
+            if(route)
+            {
+                var splitted = route.split("#");
+                deep.context.path = route = splitted[0];
+                deep.context.hash = closure.currentHash = splitted[1] || "";
+            }
             var match = closure.node.match(route);
-            return deep.when(deep.RouteNode.refresh(match, route, fromHistory))
+            return deep.when(deep.RouteNode.refresh(match, route, fromHistory));
         }
     };
 
@@ -133,9 +145,9 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
 
     //_________________________________ DEEP LINK ____________________________________________
 
-    var oldURL = "/";
+    closure.oldURL = "/", closure.currentHash = "";
     deep.route.current = function(){
-        return oldURL;
+        return closure.oldURL+"#"+closure.currentHash;
     };
     deep.route.deepLink = function(config){
         config = deep.route.deepLink.config = config || {};
@@ -154,24 +166,28 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base){
         }
         deep.route.deepLink.useHash = true;
         deep.route.on("refreshed", function(event){
-            // console.log("ROUTE refreshed : ", event.datas, oldURL);
+            // console.log("ROUTE refreshed : ", event.datas, closure.oldURL);
             if(event.datas.refreshed)
                 deep.route.relink('body');
-            if(event.datas.route == oldURL)
+            if(event.datas.route == closure.oldURL)
                 return;
-            oldURL = event.datas.route;
+            closure.oldURL = event.datas.route;
             if(config.useHash)
-                window.location.hash = oldURL;
+                window.location.hash = closure.oldURL;
             else if(!event.datas.fromHistory)
-                window.history.pushState({ url:oldURL },"", oldURL);
+            {
+                // console.log("REFRESHED NOT FROM HISTORY : ", closure.oldURL+"#"+deep.context.hash);
+                var url = closure.oldURL+(deep.context.hash?("#"+deep.context.hash):"");
+                window.history.pushState({ url:url },"", url);
+            }    
         });
 
         if(config.useHash)
         {
             function hashChange(event) {
                 var newHash = window.location.hash.substring(1) || "/";
-                //console.log("__________________________ hash change : ", newHash, oldURL);
-                if(newHash == oldURL)
+                //console.log("__________________________ hash change : ", newHash, closure.oldURL);
+                if(newHash == closure.oldURL)
                     return;
                 deep.route(newHash || "/");
             }
