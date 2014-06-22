@@ -29,7 +29,7 @@ function(require, deep){
                 where:deep.jquery.htmlOf("#footer")
             }),
             "public":{
-                backgrounds:["this::../user"],
+                _backgrounds:["this::../user"],
                 how:"<span>ocm powaaaaaaa public</span>"
             }
         }, { group:"roles" }),
