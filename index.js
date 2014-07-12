@@ -30,26 +30,22 @@
     aka : 4/info/33
     could be label
  */
-"use strict";
 if (typeof define !== 'function') {
-    var define = require('amdefine')(module);
+	var define = require('amdefine')(module);
 }
-define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-node"], function(require, deep)
-{
+define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-node"], function(require, deep) {
+"use strict";
 	deep.errors.Route = function(msg, report, fileName, lineNum) {
-        if (typeof msg === 'object')
-            report = msg;
-        if (!msg)
-            msg = "RouterError";
-        return this.Error(500, msg, report, fileName, lineNum);
-    };
-    require("./lib/route");
+		if (typeof msg === 'object')
+			report = msg;
+		if (!msg)
+			msg = "RouterError";
+		return this.Error(500, msg, report, fileName, lineNum);
+	};
+	require("./lib/route");
 	require("./lib/route-node");
-    require("./lib/mapper");
+	require("./lib/mapper");
 
-    deep.coreUnits = deep.coreUnits || [];
-    deep.coreUnits.push("js::deep-routes/units/route-dsl", "js::deep-routes/units/map-dsl");
+	deep.coreUnits = deep.coreUnits || [];
+	deep.coreUnits.push("js::deep-routes/units/route-dsl", "js::deep-routes/units/map-dsl");
 });
-
-
-
