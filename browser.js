@@ -123,7 +123,7 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base) {
 		return closure.node.refresh();
 	};
 
-	deep.ui.enhancers["dp-route"] = function(node) {
+	deep.ui.directives["dp-route"] = function(node, context) {
 		var self = this;
 		$(node).click(function(e) {
 			e.preventDefault();
