@@ -56,8 +56,8 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base) {
 				throw deep.errors.Error(500, "you need to define a root Route map before using deep.route.");
 			if (route) {
 				var splitted = route.split("#");
-				deep.context.path = route = splitted[0];
-				deep.context.hash = closure.currentHash = splitted[1] || "";
+				deep.Promise.context.path = route = splitted[0];
+				deep.Promise.context.hash = closure.currentHash = splitted[1] || "";
 			}
 			var match = closure.node.match(route);
 			return deep.when(deep.RouteNode.refresh(match, route, fromHistory));
@@ -69,7 +69,7 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base) {
 	}
 
 	deep.route.relinkNode = function() {
-		var $ = deep.context.$;
+		var $ = deep.$();
 		if (this._deep_rerouted_)
 			return;
 		var tagName = $(this).get(0).tagName.toLowerCase(),
@@ -94,7 +94,7 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base) {
 	};
 	deep.route.relink = function(selector) {
 		// console.log("relink : ", selector);
-		deep.context.$(selector)
+		deep.Promise.context.$(selector)
 			.find("a")
 			.each(deep.route.relinkNode);
 	};
@@ -159,8 +159,8 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base) {
 			if (config.useHash)
 				window.location.hash = closure.oldURL;
 			else if (!event.datas.fromHistory) {
-				// console.log("REFRESHED NOT FROM HISTORY : ", closure.oldURL+"#"+deep.context.hash);
-				var url = closure.oldURL + (deep.context.hash ? ("#" + deep.context.hash) : "");
+				// console.log("REFRESHED NOT FROM HISTORY : ", closure.oldURL+"#"+deep.Promise.context.hash);
+				var url = closure.oldURL + (deep.Promise.context.hash ? ("#" + deep.Promise.context.hash) : "");
 				window.history.pushState({
 					url: url
 				}, "", url);
