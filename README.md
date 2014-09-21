@@ -1,6 +1,17 @@
-deep-routes : As now, just extracted from connectjs urlrouter middleware (https://github.com/fengmk2/urlrouter)
+# deep-routes
 
-Routes format will be decorate with superset to allow automatique casting and validation, 
-or reverse writing for deep-linking in browser.
+Dynamic url to route mapping.
+
+deep-routes library comes with :
+* deeply stuctured views map management tools
+* flat map management tools (single level), for restful services.
+
+
+Documentation coming soon.
+
+# Licence
+
+LGPL 3.0
+
 
 
