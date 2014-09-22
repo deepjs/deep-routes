@@ -19,8 +19,8 @@
     - staters ? will see when it's needed.
 
     - ocm at any level : 
-        - it means that views manage ocm on what, how, where, etc
-        - or any route entry itself could be ocm
+        - it means that views manage ocm on what, how, where, etc           OK
+        - or any route entry itself could be ocm                            OK
 
     - condition in views and routing : 
         maybe routing could handle conditions in same way than views do
@@ -34,18 +34,8 @@ if (typeof define !== 'function') {
 	var define = require('amdefine')(module);
 }
 define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-node"], function(require, deep) {
-"use strict";
-	deep.errors.Route = function(msg, report, fileName, lineNum) {
-		if (typeof msg === 'object')
-			report = msg;
-		if (!msg)
-			msg = "RouterError";
-		return this.Error(500, msg, report, fileName, lineNum);
-	};
+    "use strict";
 	require("./lib/route");
 	require("./lib/route-node");
 	require("./lib/mapper");
-
-	deep.coreUnits = deep.coreUnits || [];
-	deep.coreUnits.push("js::deep-routes/units/route-dsl", "js::deep-routes/units/map-dsl");
 });
