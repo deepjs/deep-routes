@@ -30,7 +30,7 @@ define(["require", "deepjs/deep", "./index"], function(require, deep, base) {
 				route.emitter = emitter;
 			return route;
 		} else if (typeof route === 'object')
-			return deep.createRouteMap(route, strict)
+			return deep.structuredRoutes(route, strict)
 				.done(function(node) {
 					closure.map = route;
 					closure.node = node;
