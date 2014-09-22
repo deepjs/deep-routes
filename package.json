@@ -1,27 +1,29 @@
 {
-  "name": "deep-routes",
-  "description":"route parser utilities for deepjs",
-  "author":"Gilles Coomans <gilles.coomans@gmail.com>", 
-  "version": "0.3.6",
-  "contributors": ["Philippe Delabye <phil@chemicalrules.net>"],
-  "licenses": [
-    {
-         "type": "LGPLv3.0",
-         "url": "http://www.gnu.org/licenses/lgpl-3.0.txt"
-     }
-  ],
-  "directories": {
-    "lib": "./lib"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/deepjs/deep-routes.git"
-  },
-  "dependencies": {
-    "deepjs": ">=0.13.1"
-  },
-  "engine":{
-  	"node":">=0.10.0"
-  },
-  "main":"./index.js"
+ "name": "deep-routes",
+ "description": "route parser utilities for deepjs",
+ "author": "Gilles Coomans <gilles.coomans@gmail.com>",
+ "version": "0.3.7",
+ "contributors": [
+  "Philippe Delabye <phil@chemicalrules.net>"
+ ],
+ "licenses": [
+  {
+   "type": "LGPLv3.0",
+   "url": "http://www.gnu.org/licenses/lgpl-3.0.txt"
+  }
+ ],
+ "directories": {
+  "lib": "./lib"
+ },
+ "repository": {
+  "type": "git",
+  "url": "https://github.com/deepjs/deep-routes.git"
+ },
+ "dependencies": {
+  "deepjs": ">=0.13.1"
+ },
+ "engine": {
+  "node": ">=0.10.0"
+ },
+ "main": "./index.js"
 }
