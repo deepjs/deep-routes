@@ -131,7 +131,7 @@ var deep = require("deepjs");
 require("deep-routes/lib/flat");
 
 var map = {
-	"/campaign":{  // declare simple path without variable catch => will be expaneded
+	"/campaign":{  // declare simple path without variable catch => will be expanded
 		// campaign controller
 		title:"campaign controller"
 	},
