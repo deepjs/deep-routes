@@ -175,9 +175,9 @@ If "route" matchs (or if there is no route property, which means always match), 
 So the algorithm finally selects a tree of controllers that match a uri.
 
 Additionnaly, any "route" entry could be absolute (starting with "/"), or relative to last matched index :
-* ./foo : says try to match "foo" after last matched index
-* ../foo : says try to match "foo" after last matched index - 1
-* ../../foo : says try to match "foo" after last matched index - 2
+* `./foo` : says try to match "foo" after last matched index
+* `../foo` : says try to match "foo" after last matched index - 1
+* `../../foo` : says try to match "foo" after last matched index - 2
 * ...
 
 
