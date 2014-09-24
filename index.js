@@ -33,9 +33,9 @@
 if (typeof define !== 'function') {
 	var define = require('amdefine')(module);
 }
-define(["require", "deepjs/deep", "./lib/route", "./lib/mapper", "./lib/route-node"], function(require, deep) {
+define(["require", "deepjs/deep", "./lib/route", "./lib/structured", "./lib/route-node"], function(require, deep) {
     "use strict";
 	require("./lib/route");
 	require("./lib/route-node");
-	require("./lib/mapper");
+	require("./lib/structured");
 });
