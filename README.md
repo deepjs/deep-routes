@@ -121,7 +121,7 @@ deep.flatRoutes(map) // flatten and compile map. returns a mapper object which c
 
 ```
 
-### Standard restful expantion
+### Standard restful expansion
 
 When using deep.flatRoutes for restful services mapping, you could ask to expand simple routes (routes without variable catch) with default restful routing pattern (catching optional id, queries or subpath).
 
