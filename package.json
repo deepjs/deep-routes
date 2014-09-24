@@ -25,5 +25,8 @@
  "engine": {
   "node": ">=0.10.0"
  },
- "main": "./index.js"
+  "keywords": [
+    "route",
+    "deepjs"
+  ]
 }

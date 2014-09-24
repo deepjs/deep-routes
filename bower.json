@@ -1,0 +1,25 @@
+{
+  "name": "deep-routes",
+  "version": "0.3.7",
+  "homepage": "https://github.com/deepjs/deep-routes",
+  "authors": [
+    "Gilles Coomans <gilles.coomans@gmail.com>"
+  ],
+  "description": "route parser utilities for deepjs",
+  "moduleType": [
+    "amd",
+    "node"
+  ],
+  "keywords": [
+    "route",
+    "deepjs"
+  ],
+  "license": "LGPL 3.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
