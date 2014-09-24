@@ -170,7 +170,7 @@ A structured map is defined by a structure of objects containing "route" and/or 
 The "route" entry gives the route matcher of your controller, and "subs" property contains optional subcontrollers.
 
 The routing algorithm is like an automate that try to match any "route" property founded in current level's entries.
-If "route" matchs (or if there is no route property, which means always match), it select current entry, and if current entry contains a "subs" property, recurse route matching on it.
+If "route" matchs (or if there is no route property, which means always match), it selects current entry, and if current entry contains a "subs" property then algorithm appying route matching recursively on it.
 
 So the algorithm finally selects a tree of controllers that match a uri.
 
