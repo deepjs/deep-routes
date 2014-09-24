@@ -12,14 +12,14 @@ define(["require", "deepjs/deep"], function(require, deep, Unit) {
 		tests: {
 			base: function() {
 				var route = new deep.Route("/campaign/?s:id/update/?q:query/?(i:start/i:end)");
-				return deep(route.match("/campaign/12/update/?jekk"))
+				return deep(route.match("/campaign/12/update/?foo"))
 					.equal({
-						catched: ["campaign", "12", "update", "?jekk"],
+						catched: ["campaign", "12", "update", "?foo"],
 						output: {
 							id: "12",
-							query:"?jekk"
+							query:"?foo"
 						},
-						parts: ["campaign", "12", "update", "?jekk"],
+						parts: ["campaign", "12", "update", "?foo"],
 						index: 4,
 						start: 0
 					});
