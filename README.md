@@ -23,29 +23,66 @@ bower install deep-routes
 
 ## Route DSL
 
-It has been developped to clarify route parsing description, and to allow relative route matching in structured maps (see below).
+It has been developped to clarify route parsing description, and to allow relative route matching in structured maps (see [below](#deeply-structured-map)).
 
-example :
+Example : `/campaign/?s:id/update/?q:query/?(i:start/i:end)` could matchs :
 
+* /campaign/
+* /campaign/anID
+* /campaign/anID/update
+* /campaign/anID/update/?some=query
+* /campaign/anID/update/?some=query/12/24
+* /campaign/anID/update/12/24
 
-Explanation part by part :
-* 
-
-### Usage
+Usage
 ```javascript
-
+var route = new deep.Route("/campaign/?s:id/update/?q:query/?(i:start/i:end)");
+var r = route.match("/campaign/12/update/?foo");
+console.log(r);
+/* result : 
+{
+	catched: ["campaign", "12", "update", "?foo"],
+	output: {
+		id: "12",
+		query:"?foo"
+	},
+	parts: ["campaign", "12", "update", "?foo"],
+	index: 4,
+	start: 0
+}
+ */
 ```
 
 ### Rules
 
+* starting with `?` : parts is optional
+* starting with `!` : anything but following
+* parts group : surrounded with parenthesis
+* disjonction : surrounded with square brackets, separated with comas. e.g. [campaign,!product]
+* variable catch : parts name start with x:  where 'x' is a variable type (see below). e.g. "s:id" or "q:query"
+* parts name equal $ : says that tested route need to ends here
 
+Additionnaly, if whole route start with '?' or '!', it is seen as a optional or negated block.
 
 ### variables types
 
+* `i:` integer
+* `f:` float
+* `q:` queryString. anything starting with '?'
+* `r:` rql query. anything starting with '?'
+* `s:` string. anything.
+* `p:` path. used at end of route. says : take the rest of tested  route. e.g. `/campaign/p:path` will match `/campaign/my/long/path`
+
 
 ### add custom type
+adding date : 
 ```javascript
-
+deep.Route.addType("d:", function(input) { // date
+	var r = parseInt(input, 10);
+	if (!isNaN(r) && r !== Infinity)
+		return new Date(r);
+	return null;
+});
 ```
 
 ## Flat map
@@ -151,55 +188,59 @@ var map = {
 		// no "route" property => will always be selected
 	},
 	home:{
-		// home controller : selected if route start with /home or equal /
+		// home controller : selected if this.route start with /home or equal /
 		route:"/[home,$]"
 		// ...
 	},
-	products:{
-		// products ctrler : selected if route start with /products
+	product:{
+		// products ctrler : selected if this.route start with /products
 		route:"/product",
 		// ...
 		subs:{
 			list:{
-				// list ctrler : selected if route match, from last matched index (here after /product) :
-				// ./?some=query or ./?some=query/an_integer/another_integer
+				// list ctrler : selected if this.route match, from last matched index (here after /product) :
 				route:"./q:query/?(i:start/i:end)"
 			},
 			detail:{
-				// list ctrler : selected if route match, from last matched index :
-				// ./detail/a_string
+				// list ctrler : selected if this.route match, from last matched index :
 				route:"./detail/s:id"
 			},
 			comment:{
-				// comment ctrler : selected if route match, from last matched index :
-				// ./comment/a_string
+				// comment ctrler : selected if this.route match, from last matched index :
 				route:"./comment/s:id"
 			}
 		}
 	},
 	//...
-}
+};
+
+deep.structuredRoutes(map)
+.done(function(mapper){
+	var r = mapper.match("/product/");
+	console.log(r);
+})
+.elog();
 ```
 
 Possibles routes matched by this map :
 
 * `/` (selected : topbar, home)
 * `/home` (selected : topbar, home)
-* `/products/?some=query` (selected : topbar, products, list)
-* `/products/?some=query/0/9` (selected : topbar, products, list)
-* `/products/?some=query/detail/53` (selected : topbar, products, list, detail)
-* `/products/?some=query/detail/53/comment/12` (selected : topbar, products, list, detail, comment)
-* `/products/?some=query/comment/12` (selected : topbar, products, list, comment)
-* `/products/?some=query/0/9/detail/53` (selected : topbar, products, list, detail)
-* `/products/?some=query/0/9/detail/53/comment/12` (selected : topbar, products, list, detail, comment)
-* `/products/?some=query/0/9/comment/12` (selected : topbar, products, list, comment)
-* `/products/detail/53` (selected : topbar, products, detail)
-* `/products/detail/53/comment/12` (selected : topbar, products, detail, comment)
-* `/products/comment/12` (selected : topbar, products, detail)
+* `/product/?some=query` (selected : topbar, products, list)
+* `/product/?some=query/0/9` (selected : topbar, products, list)
+* `/product/?some=query/detail/53` (selected : topbar, products, list, detail)
+* `/product/?some=query/detail/53/comment/12` (selected : topbar, products, list, detail, comment)
+* `/product/?some=query/comment/12` (selected : topbar, products, list, comment)
+* `/product/?some=query/0/9/detail/53` (selected : topbar, products, list, detail)
+* `/product/?some=query/0/9/detail/53/comment/12` (selected : topbar, products, list, detail, comment)
+* `/product/?some=query/0/9/comment/12` (selected : topbar, products, list, comment)
+* `/product/detail/53` (selected : topbar, products, detail)
+* `/product/detail/53/comment/12` (selected : topbar, products, detail, comment)
+* `/product/comment/12` (selected : topbar, products, detail)
 
-The idea, with relative route management, is to break coupling between parent and children, to obtain clean MVC pattern where neither parent nor children know anything about each other.
+The idea, with relative route management, is to break coupling between parent and children, to obtain clean MVC pattern where __neither___ parent __nor__ children know anything about each other.
 
-As a controller could define its own route management (as list, detail and comment in example above), independently of previously "consummmed" route's parts, it allows us to reattach or reuse a controller elsewhere without anychange.
+As a controller could define its own route management (as "list", "detail" and "comment" in example above), independently of previously "consummmed" route's parts, it allows us to reattach or reuse a controller elsewhere without anychange.
 
 
 ## Structured maps and views
