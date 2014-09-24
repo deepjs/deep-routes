@@ -36,6 +36,8 @@ Example : `/campaign/?s:id/update/?q:query/?(i:start/i:end)` could matchs :
 
 Usage
 ```javascript
+var deep = require("deepjs");
+require("deep-routes/lib/route");
 var route = new deep.Route("/campaign/?s:id/update/?q:query/?(i:start/i:end)");
 var r = route.match("/campaign/12/update/?foo");
 console.log(r);
