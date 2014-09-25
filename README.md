@@ -230,8 +230,8 @@ deep.structuredRoutes(map)
 		start: ...,					 	 // first matched index
 		end: ...,						 // last matched index
 		endChilds: ..., 				 // last children matched index
-		output: { /* ... */ }, 			 // object containing catched variables
-		childs: [ /*...*/ ],			 // array of matched children
+		output: {  ...  }, 			 	 // object containing catched variables
+		childs: [ ... ],			 	 // array of matched children
 		parent: parentMatch || null,     // node's parent
 		path: this.path,				 // node's path
 		key: this.key,					 // node's key
