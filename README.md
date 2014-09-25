@@ -220,6 +220,25 @@ deep.structuredRoutes(map)
 .done(function(mapper){
 	var r = mapper.match("/product/");
 	console.log(r);
+	/* result :
+	{
+		_deep_matched_node_: true,
+		unmatch: false,  				 // true if nothing match
+		route: ["...", "...", "..."],	 // splitted route
+		catched: ["...", "...", ...],    // catched parts
+		node: this,						 // associated RouteNode
+		start: ...,					 	 // first matched index
+		end: ...,						 // last matched index
+		endChilds: ..., 				 // last children matched index
+		output: { /* ... */ }, 			 // object containing catched variables
+		childs: [ /*...*/ ],			 // array of matched children
+		parent: parentMatch || null,     // node's parent
+		path: this.path,				 // node's path
+		key: this.key,					 // node's key
+		go: go,							 // got-to-route  handler
+		get: getRoute 					 // get-route     handler
+	}
+	*/
 })
 .elog();
 ```
