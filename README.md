@@ -215,32 +215,6 @@ var map = {
 	},
 	//...
 };
-
-deep.structuredRoutes(map)
-.done(function(mapper){
-	var r = mapper.match("/product/");
-	console.log(r);
-	/* result :
-	{
-		_deep_matched_node_: true,
-		unmatch: false,  				 // true if nothing match
-		route: ["...", "...", "..."],	 // splitted route
-		catched: ["...", "...", ...],    // catched parts
-		node: this,						 // associated RouteNode
-		start: ...,					 	 // first matched index
-		end: ...,						 // last matched index
-		endChilds: ..., 				 // last children matched index
-		output: {  ...  }, 			 	 // object containing catched variables
-		childs: [ ... ],			 	 // array of matched children
-		parent: parentMatch || null,     // node's parent
-		path: this.path,				 // node's path
-		key: this.key,					 // node's key
-		go: go,							 // got-to-route  handler
-		get: getRoute 					 // get-route     handler
-	}
-	*/
-})
-.elog();
 ```
 
 Possibles routes matched by this map :
@@ -259,20 +233,52 @@ Possibles routes matched by this map :
 * `/product/detail/53/comment/12` (selected : topbar, products, detail, comment)
 * `/product/comment/12` (selected : topbar, products, detail)
 
-The idea, with relative route management, is to break coupling between parent and children, to obtain clean MVC pattern where __neither___ parent __nor__ children know anything about each other.
+
+The idea, with relative route management, is to break coupling between parent and children, to obtain clean MVC pattern where __neither__ parent __nor__ children know anything about each other.
 
 As a controller could define its own route management (as "list", "detail" and "comment" in example above), independently of previously "consummmed" route's parts, it allows us to reattach or reuse a controller elsewhere without anychange.
 
 
 ## Structured maps and views
 
+As structured maps have been developped principaly for views and subviews management, it works hand in hand with [deep-views](https://github.com/deepjs/deep-views).
+
+
+```javascript 
+var deep = require("deepjs");
+require("deep-views/lib/view");
+require("deep-routes/lib/structured");
+var map = {
+	topbar:deep.View({
+		how:"<div>topbar content</div>",
+		where:"dom.appendTo::#topbar"
+	}),
+	home:deep.View({
+		route:"/[home,$]",
+		how:"<div>home content</div>",
+		where:"dom.appendTo::#content"
+	}),
+	profile:deep.View({
+		route:"/profile/?s:name",
+		how:"<div>hello { name | 'dude' } !</div>",
+		where:"dom.appendTo::#content"
+	})
+};
+deep.structuredRoutes(map) // flatten and compile map. return root node (a deep.RouteNode).
+.done(function(node){
+	var r = node.match("/campaign/john");
+	console.log(r);
+})
+.elog();
+```
+
+
+
 ### load and refresh sequence
 
 ### relink
 
 ### inner view route and getRoute
-
-
 
 ## Licence
 
