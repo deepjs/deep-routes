@@ -27,6 +27,8 @@
  },
  "keywords": [
   "route",
+  "restful-router",
+  "views-router",
   "deepjs"
  ]
 }
