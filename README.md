@@ -107,7 +107,7 @@ var map = {
 	//...
 };
 
-deep.flatRoutes(map) // flatten and compile map. returns a mapper object which contains a single method : match(uri)
+deep.route.flatMapper(map) // flatten and compile map. returns a mapper object which contains a single method : match(uri)
 .done(function(mapper){
 	var r = mapper.match("/product/12"); // return first match
 	console.log(r);
@@ -125,7 +125,7 @@ deep.flatRoutes(map) // flatten and compile map. returns a mapper object which c
 
 ### Standard restful expansion
 
-When using deep.flatRoutes for restful services mapping, you could ask to expand simple routes (routes without variable catch) with default restful routing pattern (catching optional id, queries or subpath).
+When using deep.route.flatMapper for restful services mapping, you could ask to expand simple routes (routes without variable catch) with default restful routing pattern (catching optional id, queries or subpath).
 
 It means :
 ```javascript
@@ -143,7 +143,7 @@ var map = {
 	//...
 };
 
-deep.flatRoutes(map, true) // pass true as second argument to expand "simple" route
+deep.route.flatMapper(map, true) // pass true as second argument to expand "simple" route
 .done(function(mapper){
 	var r = mapper.match("/campaign/12"); // return first match
 	console.log(r);
@@ -264,7 +264,7 @@ var map = {
 		where:"dom.appendTo::#content"
 	})
 };
-deep.structuredRoutes(map) // flatten and compile map. return root node (a deep.RouteNode).
+deep.route.structuredMapper(map) // flatten and compile map. return root node (a deep.route.MapNode).
 .done(function(node){
 	var r = node.match("/campaign/john");
 	console.log(r);
