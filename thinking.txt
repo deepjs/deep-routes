@@ -1,0 +1,220 @@
+yeoman 
+
+maps
+node_modules
+	autobahnjs
+	expressjs
+	deepjs
+	deep-views
+	deep-jquery
+	deep-routes
+	deep-login
+	deep-nodejs
+	deep-swig
+	deep-restful
+	deep-mongo
+	deep-shell
+
+www
+	bower_components
+		deepjs
+		deep-views
+		deep-jquery
+		deep-restful
+		deep-local-storage
+		deep-login
+		deep-browser-routes
+			deep-routes
+			min-history
+		deep-swig
+		jquery
+		requirejs
+	tests
+
+	index.html
+	main.js
+	routes.js
+tests
+	shell
+shell.js
+index.js
+
+
+_______________________
+
+
+
+should rename repo :
+deep-node in deep-nodejs
+autobahn in autobahnjs
+
+deep-jquery
+	deep-dom
+		/lib/dom 		// dom protocol
+	deep-http-client
+		/lib/jquery/json|text|xml
+		/lib/nodejs/json|text|xml
+
+		==> deep.http.json|text|xml
+
+
+	deep-browser
+		deep-browser-routes
+		deep-login
+
+
+
+_______________________
+
+
+auto tester : 
+
+
+	give 
+		protocols to test
+		modes/user/session list
+			initialisation, loggedIn, sessionModes equality test
+
+	loop on protocols list
+		loop on modes/user
+			look store methods
+				check forbidden
+			get schema
+				get private, readOnly, transformers, ownership, format and type.
+
+			test :
+				get : id, private, owner
+				query : rql, private, owner
+				range : with(out) query
+				post : transformers, private returns, owner association, validation
+				put : transformers, private returns, readOnly, ownership, validation
+				patch : transformers, private returns, readOnly, ownership, validation
+				del : ownership
+				session : initialisation, loggedIn, sessionModes ==> provides equality test
+
+
+Full test : 
+from nodejs server/deep-login/deep-restful and protocols
+	==> apply tests
+from shell with http/nodejs client : 
+	==> apply same tests
+from browser with http/ajax client
+	==> apply same tests
+
+==> the three reports should be exactly the same
+
+
+deep-routes
+
+// server
+app : {
+	restful:{
+
+	},
+	views:{
+
+	},
+	statics:{
+
+	}
+}
+
+// client
+app : {
+	views:{
+
+	}
+}
+
+
+==> server/client/shell side : 
+
+// use views map. client : assign actual state linked to history. server : use context
+deep.route.views("/products/info/12") 
+.done(function(renderOutput){
+	
+})
+
+
+deep.mainApp et deep.app : splitted in two files loadable separatly
+=> valid for both sides
+
+
+in deep.login.logout/impersonate/session : use context.app || deep.mainApp()
+
+in deep.route.xxx use context.app || deep.mainApp()
+
+
+
+deep.route.restful("/bloupi/12")    // server only : use restful map.
+.equal(...)
+
+
+deep.route.statics("/css/custom.css") 	// server only : use statics map
+.equal(...)
+
+==> test case 
+
+	{
+		"/bloupi/12":{
+			// equal
+		},
+		"/bloupi/?hello=12":[{
+			// equal
+		}]
+	}
+
+
+
+deep.login.client(app);
+deep.route.client(app);
+
+
+deep.login.middlewares = {
+	login:require("./middlewares/login"),
+	logout:require("./middlewares/logout"),
+	impersonate:require("./middlewares/imperonsate"),
+	modes:require("./middlewares/modes"),
+	context:require("./middlewares/context")
+}
+
+namespace
+==> deep.route.structuredMap
+==> deep.route.structuredViews
+==> deep.route.flatMap
+==> deep.route.Route
+==> deep.route.RouteNode
+==> deep.route.Stater
+
+dedicated API
+
+==> deep.route.views('/campaign/12')
+==> deep.route.restful('/products/12')
+==> deep.route.statics('/some/file.css')
+
+"route" chain identity API
+	deep.route()
+	.login()
+	.views("/campaign/12")
+	.done(function(renderOutput){
+
+	});
+
+/*
+	==> un seul deep-login/lib/chain
+		qui manipule l'app décorée au travers des décorations. ajouté dans promise API
+
+	==> deep-login/lib/client or server
+
+		deep.login.client(app) // apply decoration
+		or
+		deep.login.server(app) // apply decoration
+
+
+	==> deep-routes/lib/chain
+		identité dédiées avec .restful, .views et .statics
+
+		deep.routes.client(app) // apply decoration
+		deep.routes.server(app) // apply decoration
+*/
+
